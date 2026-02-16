@@ -4,7 +4,7 @@ Anton Sakhanovych and Gavin D'Hondt
 
 ## How to Run
 
-`uv run src/main.py`
+`uv run main`
 
 ## Codebase
 
@@ -12,7 +12,9 @@ The codebase uses the following tools and packages:
 - Python 3.13
 - [uv](https://github.com/astral-sh/uv)
 - PyTorch
-- Numpy
+- numpy
+- matplotlib
+- torchvision
 - returns
 - dependency-injector
 - toolz
