@@ -1,10 +1,9 @@
 import torch
-
-from src.core.protocols import Loss
+from src.network.loss import Loss
 
 
 class CrossEntropy(Loss):
-    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    def calculate_loss(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
         Parameters:
             logits: Raw unnormalized scores. Shape: (n_classes, n_samples)
@@ -33,7 +32,8 @@ class CrossEntropy(Loss):
 
         return loss
 
-    def backward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+
+    def calculate_gradient(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         batch_size = logits.shape[1]
 
         logits_max = logits.max(dim=0, keepdim=True)[0]
