@@ -1,6 +1,7 @@
 import torch
 from src.network.activation.identity import Identity
 from src.network.activation.sigmoid import Sigmoid
+from src.network.activation.softmax import Softmax
 from src.network.layer.fully_connected import FullyConnected
 from src.network.loss.cross_entropy import CrossEntropy
 from src.network.neural_network import NeuralNetwork
@@ -22,7 +23,7 @@ def main():
     network = NeuralNetwork([
         FullyConnected(n_x, n_h1, Sigmoid()),
         FullyConnected(n_h1, n_h2, Sigmoid()),
-        FullyConnected(n_h2, n_output, Identity()),
+        FullyConnected(n_h2, n_output, Softmax()),
     ])
 
     loss_fn = CrossEntropy()
