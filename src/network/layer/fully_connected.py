@@ -33,6 +33,7 @@ class FullyConnected(Layer):
         self.weight.grad = torch.mm(grad_z, self._input_cache.t())
         self.bias.grad = grad_z.sum(dim=1, keepdim=True)
         grad_a = torch.mm(self.weight.t(), grad_z)
+        self._input_cache = None  # FIX: free cached input to reduce peak GPU memory
 
         return grad_a
 

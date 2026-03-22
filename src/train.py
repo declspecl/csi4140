@@ -2,42 +2,56 @@ import torch
 
 
 def _collect_params(model):
-    """Collect all parameters from model layers with stable (layer_idx, param_name) keys."""
+    """Collect all parameters from model layers with stable (layer_idx, param_name_str) keys."""
     params = []
     for i, layer in enumerate(model.layers):
         for name, param in layer.parameters().items():
-            params.append(((i, name), param))
+            key = name.value if hasattr(name, "value") else name
+            params.append(((i, key), param))
     return params
 
 
-def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu") -> tuple[float, float]:
+def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu", iteration_losses=None) -> tuple[float, float]:
     """
     Runs one full pass over train_loader.
     Returns: (avg_loss, accuracy) for the epoch.
+    If iteration_losses list is provided, appends each batch loss to it.
     """
     model.train()
     total_loss = 0.0
     correct = 0
     total = 0
 
-    for images, labels in train_loader:
+    for batch_idx, (images, labels) in enumerate(train_loader):
         images, labels = images.to(device), labels.to(device)
 
-        probs = model.forward(images)
+        # FIX: nn.Parameter has requires_grad=True by default, so PyTorch builds
+        # an autograd graph for every operation (einsum, mm, etc.) even though we
+        # compute gradients manually. This was causing ~14GB of GPU memory usage
+        # from the stored computation graph alone. no_grad disables this.
+        with torch.no_grad():
+            probs = model.forward(images)
 
-        loss = loss_fn.calculate_loss(probs, labels)
-        total_loss += loss.item()
+            loss = loss_fn.calculate_loss(probs, labels)
+            loss_val = loss.item()
+            total_loss += loss_val
 
-        preds = probs.argmax(dim=0)
-        correct += (preds == labels).sum().item()
-        total += labels.size(0)
+            if iteration_losses is not None:
+                iteration_losses.append(loss_val)
 
-        optimizer.zero_grad()
+            preds = probs.argmax(dim=0)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
 
-        grad = loss_fn.calculate_gradient(probs, labels)
-        model.backward(grad)
+            optimizer.zero_grad()
 
-        optimizer.step()
+            grad = loss_fn.calculate_gradient(probs, labels)
+            model.backward(grad)
+
+            optimizer.step()
+
+        if batch_idx % 50 == 0:
+            print(f"    Batch {batch_idx}/{len(train_loader)} - loss: {loss_val:.4f}", flush=True)
 
     avg_loss = total_loss / len(train_loader) if len(train_loader) > 0 else 0.0
     accuracy = correct / total if total > 0 else 0.0
@@ -94,12 +108,20 @@ def train(
         "train_acc": [],
         "test_loss": [],
         "test_acc": [],
+        "iteration_loss": [],
     }
     best_test_acc = 0.0
     best_state = None
 
     for epoch in range(epochs):
-        train_loss, train_acc = train_epoch(model, train_loader, loss_fn, optimizer, device)
+        train_loss, train_acc = train_epoch(
+            model,
+            train_loader,
+            loss_fn,
+            optimizer,
+            device,
+            iteration_losses=history["iteration_loss"],
+        )
         test_loss, test_acc = evaluate(model, test_loader, loss_fn, device)
 
         history["train_loss"].append(train_loss)
@@ -115,7 +137,7 @@ def train(
 
         if test_acc > best_test_acc:
             best_test_acc = test_acc
-            best_state = {key: p.data.clone() for key, p in _collect_params(model)}
+            best_state = {key: p.data.cpu().clone() for key, p in _collect_params(model)}
             torch.save(best_state, checkpoint_path)
 
         if scheduler is not None:
@@ -124,6 +146,6 @@ def train(
     if best_state is not None:
         param_map = {key: p for key, p in _collect_params(model)}
         for key, data in best_state.items():
-            param_map[key].data.copy_(data)
+            param_map[key].data.copy_(data.to(param_map[key].data.device))
 
     return history

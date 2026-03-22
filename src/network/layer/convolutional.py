@@ -2,6 +2,7 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from src.network import ParameterType
 from src.network.layer import Layer
@@ -19,15 +20,8 @@ class Convolutional(Layer):
         self.weight = nn.Parameter(torch.randn(out_channels, in_channels, kernel_size, kernel_size) * std)
         self.bias = nn.Parameter(torch.zeros(out_channels))
 
-        self._input_cache = None
-
-    def _pad(self, input: torch.Tensor) -> torch.Tensor:
-        if self.padding == 0:
-            return input
-        N, C, H, W = input.shape
-        padded = torch.zeros(N, C, H + 2 * self.padding, W + 2 * self.padding, dtype=input.dtype, device=input.device)
-        padded[:, :, self.padding : self.padding + H, self.padding : self.padding + W] = input
-        return padded
+        self._input_unfolded = None
+        self._input_shape = None
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         if input.dim() != 4:
@@ -38,45 +32,45 @@ class Convolutional(Layer):
         H_out = (H + 2 * self.padding - K) // self.stride + 1
         W_out = (W + 2 * self.padding - K) // self.stride + 1
 
-        padded = self._pad(input)
-        self._input_cache = padded
+        # im2col via F.unfold: extracts sliding patches as columns
+        # (N, C_in*K*K, H_out*W_out)
+        input_unfolded = F.unfold(input, K, padding=self.padding, stride=self.stride)
+        self._input_unfolded = input_unfolded
+        self._input_shape = input.shape
 
-        output = torch.zeros(N, self.out_channels, H_out, W_out, dtype=input.dtype, device=input.device)
+        # Reshape weight to (out_channels, C_in*K*K) for batched matmul
+        weight_matrix = self.weight.view(self.out_channels, -1)
 
-        for kh in range(K):
-            for kw in range(K):
-                input_slice = padded[:, :, kh :: self.stride, kw :: self.stride][:, :, :H_out, :W_out]
-                output += torch.einsum("nchw,oc->nohw", input_slice, self.weight[:, :, kh, kw])
+        # (N, out_channels, H_out*W_out) via batched matmul
+        output = weight_matrix @ input_unfolded + self.bias.view(-1, 1)
 
-        output += self.bias.view(1, -1, 1, 1)
-        return output
+        return output.view(N, self.out_channels, H_out, W_out)
 
     def backward(self, grad_output: torch.Tensor) -> torch.Tensor:
-        if self._input_cache is None:
+        if self._input_unfolded is None:
             raise ValueError("Must call forward() before backward()")
 
-        padded = self._input_cache
-        N, C_out, H_out, W_out = grad_output.shape
+        input_unfolded = self._input_unfolded
+        N, C_in, H, W = self._input_shape
         K = self.kernel_size
+        N, C_out, H_out, W_out = grad_output.shape
 
-        grad_weight = torch.zeros_like(self.weight)
-        grad_padded = torch.zeros_like(padded)
+        # Reshape grad to (N, out_channels, H_out*W_out)
+        grad_matrix = grad_output.view(N, C_out, H_out * W_out)
 
-        for kh in range(K):
-            for kw in range(K):
-                input_slice = padded[:, :, kh :: self.stride, kw :: self.stride][:, :, :H_out, :W_out]
-                grad_weight[:, :, kh, kw] = torch.einsum("nohw,nchw->oc", grad_output, input_slice)
-                grad_padded[:, :, kh :: self.stride, kw :: self.stride][:, :, :H_out, :W_out] += torch.einsum(
-                    "nohw,oc->nchw", grad_output, self.weight[:, :, kh, kw]
-                )
-
-        self.weight.grad = grad_weight
+        # Weight gradient: sum over batch of grad_matrix @ input_unfolded^T
+        # (N, out_channels, H_out*W_out) @ (N, H_out*W_out, C_in*K*K) -> (N, out_channels, C_in*K*K)
+        weight_matrix = self.weight.view(self.out_channels, -1)
+        self.weight.grad = (grad_matrix @ input_unfolded.transpose(1, 2)).sum(dim=0).view(self.weight.shape)
         self.bias.grad = grad_output.sum(dim=(0, 2, 3))
 
-        if self.padding > 0:
-            grad_input = grad_padded[:, :, self.padding : -self.padding, self.padding : -self.padding]
-        else:
-            grad_input = grad_padded
+        # Input gradient: weight^T @ grad_matrix, then fold back
+        # (N, C_in*K*K, H_out*W_out)
+        grad_unfolded = weight_matrix.t() @ grad_matrix
+        grad_input = F.fold(grad_unfolded, (H, W), K, padding=self.padding, stride=self.stride)
+
+        self._input_unfolded = None  # FIX: free cached input to reduce peak GPU memory
+        self._input_shape = None
 
         return grad_input
 
