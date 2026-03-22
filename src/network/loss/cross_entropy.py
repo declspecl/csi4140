@@ -10,7 +10,6 @@ class CrossEntropy(Loss):
 
         return loss
 
-
     def calculate_gradient(self, probs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         batch_size = probs.shape[1]
 

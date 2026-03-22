@@ -22,13 +22,15 @@ def main():
     learning_rate = 0.01
     iterations = 1000
 
-    network = NeuralNetwork([
-        FullyConnected(n_x, n_h1, Sigmoid()),
-        Dropout(p=0.5),
-        FullyConnected(n_h1, n_h2, Sigmoid()),
-        Dropout(p=0.5),
-        FullyConnected(n_h2, n_output, Softmax()),
-    ])
+    network = NeuralNetwork(
+        [
+            FullyConnected(n_x, n_h1, Sigmoid()),
+            Dropout(p=0.5),
+            FullyConnected(n_h1, n_h2, Sigmoid()),
+            Dropout(p=0.5),
+            FullyConnected(n_h2, n_output, Softmax()),
+        ]
+    )
 
     loss_fn = CrossEntropy()
     optimizer = SGD(network.layers, learning_rate=learning_rate, regularizer=L2(lambda_=0.01))

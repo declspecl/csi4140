@@ -18,14 +18,12 @@ class FullyConnected(Layer):
 
         self._input_cache = None
 
-
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         self._input_cache = input
         z = torch.mm(self.weight, input) + self.bias
         a = self.activation.forward(z)
 
         return a
-
 
     def backward(self, grad_output: torch.Tensor) -> torch.Tensor:
         if self._input_cache is None:
@@ -38,9 +36,5 @@ class FullyConnected(Layer):
 
         return grad_a
 
-
     def parameters(self) -> Dict[ParameterType, nn.Parameter]:
-        return {
-            ParameterType.WEIGHT: self.weight,
-            ParameterType.BIAS: self.bias
-        }
+        return {ParameterType.WEIGHT: self.weight, ParameterType.BIAS: self.bias}
