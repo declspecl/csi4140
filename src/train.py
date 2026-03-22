@@ -22,7 +22,7 @@ def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu", iteration
     correct = 0
     total = 0
 
-    for images, labels in train_loader:
+    for batch_idx, (images, labels) in enumerate(train_loader):
         images, labels = images.to(device), labels.to(device)
 
         # FIX: nn.Parameter has requires_grad=True by default, so PyTorch builds
@@ -49,6 +49,9 @@ def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu", iteration
             model.backward(grad)
 
             optimizer.step()
+
+        if batch_idx % 50 == 0:
+            print(f"    Batch {batch_idx}/{len(train_loader)} - loss: {loss_val:.4f}", flush=True)
 
     avg_loss = total_loss / len(train_loader) if len(train_loader) > 0 else 0.0
     accuracy = correct / total if total > 0 else 0.0
