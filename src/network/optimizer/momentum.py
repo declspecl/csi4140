@@ -21,6 +21,9 @@ class Momentum(BaseOptimizer):
         self.velocity = {id(param): torch.zeros_like(param.data) for _, param in self.params}
 
     def _update(self, param: nn.Parameter, grad: torch.Tensor) -> None:
-        v = self.beta * self.velocity[id(param)] + (1.0 - self.beta) * grad
-        self.velocity[id(param)] = v
-        param.data -= self.learning_rate * v
+        pid = id(param)
+        # FIX: lazy device move + in-place ops (same rationale as Adam)
+        if self.velocity[pid].device != param.device:
+            self.velocity[pid] = self.velocity[pid].to(param.device)
+        self.velocity[pid].mul_(self.beta).add_(grad, alpha=1.0 - self.beta)
+        param.data.add_(self.velocity[pid], alpha=-self.learning_rate)
