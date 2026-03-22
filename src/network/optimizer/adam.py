@@ -26,9 +26,11 @@ class Adam(BaseOptimizer):
         self.m = {id(param): torch.zeros_like(param.data) for _, param in self.params}
         self.v = {id(param): torch.zeros_like(param.data) for _, param in self.params}
 
-    def _update(self, param: nn.Parameter, grad: torch.Tensor) -> None:
+    def step(self) -> None:
         self.t += 1
+        super().step()
 
+    def _update(self, param: nn.Parameter, grad: torch.Tensor) -> None:
         m = self.beta1 * self.m[id(param)] + (1.0 - self.beta1) * grad
         v = self.beta2 * self.v[id(param)] + (1.0 - self.beta2) * grad**2
         self.m[id(param)] = m
