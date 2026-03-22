@@ -12,8 +12,18 @@ from src.network.regularizer import Regularizer
 class BaseOptimizer(Optimizer):
     def __init__(self, layers: Sequence[Layer], learning_rate: float, regularizer: Optional[Regularizer] = None):
         self.params = [(param_type, param) for layer in layers for param_type, param in layer.parameters().items()]
-        self.learning_rate = learning_rate
+        self._learning_rate = learning_rate
         self.regularizer = regularizer
+
+    @property
+    def learning_rate(self) -> float:
+        return self._learning_rate
+
+    @learning_rate.setter
+    def learning_rate(self, value: float) -> None:
+        if value <= 0:
+            raise ValueError(f"Learning rate must be positive, got {value}")
+        self._learning_rate = value
 
     def step(self) -> None:
         for param_type, param in self.params:

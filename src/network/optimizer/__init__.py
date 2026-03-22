@@ -2,6 +2,10 @@ from typing import Protocol
 
 
 class Optimizer(Protocol):
-    learning_rate: float
+    @property
+    def learning_rate(self) -> float: ...
+
+    @learning_rate.setter
+    def learning_rate(self, value: float) -> None: ...
 
     def step(self) -> None: ...
