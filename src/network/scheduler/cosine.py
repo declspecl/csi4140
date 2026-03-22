@@ -13,6 +13,6 @@ class CosineDecay(Scheduler):
 
     def step(self) -> None:
         self.t += 1
-        self.optimizer.learning_rate = (
-            self.lr_min + 0.5 * (self.lr_initial - self.lr_min) * (1.0 + math.cos(math.pi * self.t / self.epochs))
+        self.optimizer.learning_rate = self.lr_min + 0.5 * (self.lr_initial - self.lr_min) * (
+            1.0 + math.cos(math.pi * self.t / self.epochs)
         )
