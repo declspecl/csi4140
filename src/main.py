@@ -1,10 +1,12 @@
 import torch
-from src.network.activation.identity import Identity
 from src.network.activation.sigmoid import Sigmoid
 from src.network.activation.softmax import Softmax
+from src.network.layer.dropout import Dropout
 from src.network.layer.fully_connected import FullyConnected
 from src.network.loss.cross_entropy import CrossEntropy
 from src.network.neural_network import NeuralNetwork
+from src.network.optimizer.sgd import SGD
+from src.network.regularizer.l2 import L2
 
 
 def main():
@@ -22,11 +24,14 @@ def main():
 
     network = NeuralNetwork([
         FullyConnected(n_x, n_h1, Sigmoid()),
+        Dropout(p=0.5),
         FullyConnected(n_h1, n_h2, Sigmoid()),
+        Dropout(p=0.5),
         FullyConnected(n_h2, n_output, Softmax()),
     ])
 
     loss_fn = CrossEntropy()
+    optimizer = SGD(network.layers, learning_rate=learning_rate, regularizer=L2(lambda_=0.01))
     cost_values = []
 
     for iteration in range(iterations):
@@ -38,10 +43,7 @@ def main():
         grad_output = loss_fn.calculate_gradient(output, y)
         network.backward(grad_output)
 
-        params = [param for layer in network.layers for param in layer.parameters().values()]
-        for param in params:
-            if param.grad is not None:
-                param.data -= learning_rate * param.grad
+        optimizer.step()
 
     print(f"Final cost value: {cost_values[-1]:.6f}")
 
