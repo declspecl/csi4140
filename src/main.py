@@ -1,53 +1,39 @@
 import torch
-from src.network.activation.sigmoid import Sigmoid
-from src.network.activation.softmax import Softmax
-from src.network.layer.dropout import Dropout
-from src.network.layer.fully_connected import FullyConnected
+
+from src.data.cifar10 import get_cifar10_dataloaders
+from src.models.cifar10_cnn import build_cifar10_cnn
 from src.network.loss.cross_entropy import CrossEntropy
-from src.network.neural_network import NeuralNetwork
-from src.network.optimizer.sgd import SGD
-from src.network.regularizer.l2 import L2
+from src.network.optimizer.adam import Adam
+from src.network.scheduler.cosine import CosineDecay
+from src.train import train
 
 
 def main():
-    torch.manual_seed(32)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {device}")
 
-    X = torch.rand(5, 100, dtype=torch.float32)
-    y = torch.randint(0, 3, (100,), dtype=torch.long)
+    epochs = 50
+    learning_rate = 0.001
 
-    n_x, m = X.shape
-    n_h1 = 5
-    n_h2 = 4
-    n_output = 3
-    learning_rate = 0.01
-    iterations = 1000
+    train_loader, test_loader = get_cifar10_dataloaders(batch_size=128)
+    model = build_cifar10_cnn()
+    loss_fn = CrossEntropy()
+    optimizer = Adam(model.parameters(), learning_rate=learning_rate)
+    scheduler = CosineDecay(optimizer, epochs=epochs)
 
-    network = NeuralNetwork(
-        [
-            FullyConnected(n_x, n_h1, Sigmoid()),
-            Dropout(p=0.5),
-            FullyConnected(n_h1, n_h2, Sigmoid()),
-            Dropout(p=0.5),
-            FullyConnected(n_h2, n_output, Softmax()),
-        ]
+    history = train(
+        model=model,
+        train_loader=train_loader,
+        test_loader=test_loader,
+        loss_fn=loss_fn,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        epochs=epochs,
+        device=device,
+        checkpoint_path="best_model.pt",
     )
 
-    loss_fn = CrossEntropy()
-    optimizer = SGD(network.layers, learning_rate=learning_rate, regularizer=L2(lambda_=0.01))
-    cost_values = []
-
-    for iteration in range(iterations):
-        output = network.forward(X)
-        loss = loss_fn.calculate_loss(output, y)
-
-        cost_values.append(loss.item())
-
-        grad_output = loss_fn.calculate_gradient(output, y)
-        network.backward(grad_output)
-
-        optimizer.step()
-
-    print(f"Final cost value: {cost_values[-1]:.6f}")
+    print(f"\nBest test accuracy: {max(history['test_acc']):.4f}")
 
 
 if __name__ == "__main__":

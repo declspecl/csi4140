@@ -25,6 +25,10 @@ class BaseOptimizer(Optimizer):
             raise ValueError(f"Learning rate must be positive, got {value}")
         self._learning_rate = value
 
+    def zero_grad(self) -> None:
+        for _, param in self.params:
+            param.grad = None
+
     def step(self) -> None:
         for param_type, param in self.params:
             if param.grad is None:

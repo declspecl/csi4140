@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 main = "src.main:main"
+test = "pytest:main"
 
 [dependency-groups]
 dev = [

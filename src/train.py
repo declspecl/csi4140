@@ -1,18 +1,13 @@
 import torch
 
 
-def _set_training_mode(model, mode: bool) -> None:
-    for layer in model.layers:
-        if hasattr(layer, "training"):
-            layer.training = mode
-
-
-def _zero_grad(optimizer) -> None:
-    if hasattr(optimizer, "zero_grad"):
-        optimizer.zero_grad()
-    else:
-        for _, param in optimizer.params:
-            param.grad = None
+def _collect_params(model):
+    """Collect all parameters from model layers with stable (layer_idx, param_name) keys."""
+    params = []
+    for i, layer in enumerate(model.layers):
+        for name, param in layer.parameters().items():
+            params.append(((i, name), param))
+    return params
 
 
 def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu") -> tuple[float, float]:
@@ -20,7 +15,7 @@ def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu") -> tuple[
     Runs one full pass over train_loader.
     Returns: (avg_loss, accuracy) for the epoch.
     """
-    _set_training_mode(model, True)
+    model.train()
     total_loss = 0.0
     correct = 0
     total = 0
@@ -37,7 +32,7 @@ def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu") -> tuple[
         correct += (preds == labels).sum().item()
         total += labels.size(0)
 
-        _zero_grad(optimizer)
+        optimizer.zero_grad()
 
         grad = loss_fn.calculate_gradient(probs, labels)
         model.backward(grad)
@@ -54,7 +49,7 @@ def evaluate(model, test_loader, loss_fn, device="cpu") -> tuple[float, float]:
     Evaluates on test_loader without updating weights.
     Returns: (avg_loss, accuracy).
     """
-    _set_training_mode(model, False)
+    model.eval()
     total_loss = 0.0
     correct = 0
     total = 0
@@ -120,14 +115,15 @@ def train(
 
         if test_acc > best_test_acc:
             best_test_acc = test_acc
-            best_state = {id(p): p.data.clone() for _, p in optimizer.params}
+            best_state = {key: p.data.clone() for key, p in _collect_params(model)}
             torch.save(best_state, checkpoint_path)
 
         if scheduler is not None:
             scheduler.step()
 
     if best_state is not None:
-        for _, p in optimizer.params:
-            p.data.copy_(best_state[id(p)])
+        param_map = {key: p for key, p in _collect_params(model)}
+        for key, data in best_state.items():
+            param_map[key].data.copy_(data)
 
     return history
