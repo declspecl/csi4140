@@ -1,0 +1,552 @@
+    Batch 0/391 - loss: 2.8074
+    Batch 50/391 - loss: 2.1071
+    Batch 100/391 - loss: 1.8095
+    Batch 150/391 - loss: 1.7371
+    Batch 200/391 - loss: 1.4096
+    Batch 250/391 - loss: 1.5708
+    Batch 300/391 - loss: 1.3786
+    Batch 350/391 - loss: 1.2953
+Epoch 1/15 - train_loss: 1.8171 - train_acc: 0.3797 - test_loss: 1.3947 - test_acc: 0.5046
+    Batch 0/391 - loss: 1.5308
+    Batch 50/391 - loss: 1.4880
+    Batch 100/391 - loss: 1.2989
+    Batch 150/391 - loss: 1.2830
+    Batch 200/391 - loss: 1.5144
+    Batch 250/391 - loss: 1.4136
+    Batch 300/391 - loss: 1.2201
+    Batch 350/391 - loss: 1.4510
+Epoch 2/15 - train_loss: 1.3556 - train_acc: 0.5084 - test_loss: 1.1918 - test_acc: 0.5723
+    Batch 0/391 - loss: 1.2381
+    Batch 50/391 - loss: 1.2094
+    Batch 100/391 - loss: 1.2772
+    Batch 150/391 - loss: 1.2363
+    Batch 200/391 - loss: 1.1870
+    Batch 250/391 - loss: 1.0972
+    Batch 300/391 - loss: 1.0507
+    Batch 350/391 - loss: 1.2474
+Epoch 3/15 - train_loss: 1.1942 - train_acc: 0.5722 - test_loss: 1.0477 - test_acc: 0.6300
+    Batch 0/391 - loss: 1.4204
+    Batch 50/391 - loss: 0.9745
+    Batch 100/391 - loss: 1.1122
+    Batch 150/391 - loss: 1.1353
+    Batch 200/391 - loss: 1.0427
+    Batch 250/391 - loss: 1.0937
+    Batch 300/391 - loss: 1.0093
+    Batch 350/391 - loss: 1.1555
+Epoch 4/15 - train_loss: 1.0708 - train_acc: 0.6211 - test_loss: 0.9747 - test_acc: 0.6591
+    Batch 0/391 - loss: 1.0363
+    Batch 50/391 - loss: 0.8534
+    Batch 100/391 - loss: 1.1597
+    Batch 150/391 - loss: 0.9027
+    Batch 200/391 - loss: 0.9176
+    Batch 250/391 - loss: 1.0810
+    Batch 300/391 - loss: 1.0545
+    Batch 350/391 - loss: 0.9255
+Epoch 5/15 - train_loss: 0.9804 - train_acc: 0.6562 - test_loss: 0.9004 - test_acc: 0.6835
+    Batch 0/391 - loss: 0.8808
+    Batch 50/391 - loss: 1.0153
+    Batch 100/391 - loss: 1.0297
+    Batch 150/391 - loss: 0.8353
+    Batch 200/391 - loss: 0.7373
+    Batch 250/391 - loss: 0.7915
+    Batch 300/391 - loss: 0.8733
+    Batch 350/391 - loss: 1.1114
+Epoch 6/15 - train_loss: 0.9195 - train_acc: 0.6766 - test_loss: 0.8694 - test_acc: 0.6961
+    Batch 0/391 - loss: 0.8274
+    Batch 50/391 - loss: 0.9206
+    Batch 100/391 - loss: 1.0634
+    Batch 150/391 - loss: 0.8431
+    Batch 200/391 - loss: 0.8568
+    Batch 250/391 - loss: 0.8259
+    Batch 300/391 - loss: 0.8728
+    Batch 350/391 - loss: 0.7931
+Epoch 7/15 - train_loss: 0.8583 - train_acc: 0.6998 - test_loss: 0.7971 - test_acc: 0.7254
+    Batch 0/391 - loss: 0.8099
+    Batch 50/391 - loss: 0.9399
+    Batch 100/391 - loss: 0.5990
+    Batch 150/391 - loss: 0.7630
+    Batch 200/391 - loss: 0.7996
+    Batch 250/391 - loss: 0.7460
+    Batch 300/391 - loss: 0.8109
+    Batch 350/391 - loss: 0.8533
+Epoch 8/15 - train_loss: 0.8267 - train_acc: 0.7097 - test_loss: 0.7937 - test_acc: 0.7214
+    Batch 0/391 - loss: 0.7529
+    Batch 50/391 - loss: 0.7752
+    Batch 100/391 - loss: 0.9333
+    Batch 150/391 - loss: 0.6701
+    Batch 200/391 - loss: 0.7890
+    Batch 250/391 - loss: 0.8792
+    Batch 300/391 - loss: 0.7483
+    Batch 350/391 - loss: 0.7789
+Epoch 9/15 - train_loss: 0.7798 - train_acc: 0.7257 - test_loss: 0.7539 - test_acc: 0.7395
+    Batch 0/391 - loss: 0.8145
+    Batch 50/391 - loss: 0.6892
+    Batch 100/391 - loss: 0.5951
+    Batch 150/391 - loss: 0.8347
+    Batch 200/391 - loss: 0.5567
+    Batch 250/391 - loss: 0.8403
+    Batch 300/391 - loss: 0.7143
+    Batch 350/391 - loss: 0.5991
+Epoch 10/15 - train_loss: 0.7525 - train_acc: 0.7370 - test_loss: 0.7312 - test_acc: 0.7488
+    Batch 0/391 - loss: 0.8321
+    Batch 50/391 - loss: 0.7803
+    Batch 100/391 - loss: 0.6880
+    Batch 150/391 - loss: 1.0095
+    Batch 200/391 - loss: 0.8291
+    Batch 250/391 - loss: 0.6391
+    Batch 300/391 - loss: 0.7211
+    Batch 350/391 - loss: 0.7527
+Epoch 11/15 - train_loss: 0.7233 - train_acc: 0.7484 - test_loss: 0.7312 - test_acc: 0.7495
+    Batch 0/391 - loss: 0.6391
+    Batch 50/391 - loss: 0.7683
+    Batch 100/391 - loss: 0.7216
+    Batch 150/391 - loss: 0.7190
+    Batch 200/391 - loss: 0.6876
+    Batch 250/391 - loss: 0.5237
+    Batch 300/391 - loss: 0.7760
+    Batch 350/391 - loss: 0.5938
+Epoch 12/15 - train_loss: 0.6975 - train_acc: 0.7596 - test_loss: 0.7428 - test_acc: 0.7488
+    Batch 0/391 - loss: 0.6133
+    Batch 50/391 - loss: 0.8146
+    Batch 100/391 - loss: 0.6845
+    Batch 150/391 - loss: 0.6919
+    Batch 200/391 - loss: 0.7377
+    Batch 250/391 - loss: 0.6718
+    Batch 300/391 - loss: 0.6934
+    Batch 350/391 - loss: 0.6613
+Epoch 13/15 - train_loss: 0.6753 - train_acc: 0.7660 - test_loss: 0.6751 - test_acc: 0.7695
+    Batch 0/391 - loss: 0.6597
+    Batch 50/391 - loss: 0.5540
+    Batch 100/391 - loss: 0.6013
+    Batch 150/391 - loss: 0.5574
+    Batch 200/391 - loss: 0.4596
+    Batch 250/391 - loss: 0.6972
+    Batch 300/391 - loss: 0.4972
+    Batch 350/391 - loss: 0.8260
+Epoch 14/15 - train_loss: 0.6521 - train_acc: 0.7713 - test_loss: 0.6641 - test_acc: 0.7739
+    Batch 0/391 - loss: 0.5749
+    Batch 50/391 - loss: 0.6888
+    Batch 100/391 - loss: 0.7393
+    Batch 150/391 - loss: 0.6424
+    Batch 200/391 - loss: 0.6380
+    Batch 250/391 - loss: 0.6673
+    Batch 300/391 - loss: 0.5187
+    Batch 350/391 - loss: 0.7845
+Epoch 15/15 - train_loss: 0.6311 - train_acc: 0.7788 - test_loss: 0.6478 - test_acc: 0.7778
+
+============================================================
+  Reg_l2
+============================================================
+    Batch 0/391 - loss: 3.5860
+    Batch 50/391 - loss: 1.9093
+    Batch 100/391 - loss: 1.8454
+    Batch 150/391 - loss: 1.8740
+    Batch 200/391 - loss: 1.8102
+    Batch 250/391 - loss: 1.6137
+    Batch 300/391 - loss: 1.4836
+    Batch 350/391 - loss: 1.5467
+Epoch 1/15 - train_loss: 1.8185 - train_acc: 0.3722 - test_loss: 1.4533 - test_acc: 0.4738
+    Batch 0/391 - loss: 1.6701
+    Batch 50/391 - loss: 1.5035
+    Batch 100/391 - loss: 1.4713
+    Batch 150/391 - loss: 1.3366
+    Batch 200/391 - loss: 1.4768
+    Batch 250/391 - loss: 1.2441
+    Batch 300/391 - loss: 1.2722
+    Batch 350/391 - loss: 1.2263
+Epoch 2/15 - train_loss: 1.4187 - train_acc: 0.4825 - test_loss: 1.2920 - test_acc: 0.5340
+    Batch 0/391 - loss: 1.4046
+    Batch 50/391 - loss: 1.3372
+    Batch 100/391 - loss: 1.3038
+    Batch 150/391 - loss: 1.1163
+    Batch 200/391 - loss: 1.2122
+    Batch 250/391 - loss: 1.1314
+    Batch 300/391 - loss: 1.1088
+    Batch 350/391 - loss: 1.4155
+Epoch 3/15 - train_loss: 1.2882 - train_acc: 0.5341 - test_loss: 1.1703 - test_acc: 0.5859
+    Batch 0/391 - loss: 1.0696
+    Batch 50/391 - loss: 1.3641
+    Batch 100/391 - loss: 1.1093
+    Batch 150/391 - loss: 1.2056
+    Batch 200/391 - loss: 1.1834
+    Batch 250/391 - loss: 1.1235
+    Batch 300/391 - loss: 1.2356
+    Batch 350/391 - loss: 1.0829
+Epoch 4/15 - train_loss: 1.1946 - train_acc: 0.5737 - test_loss: 1.0571 - test_acc: 0.6217
+    Batch 0/391 - loss: 1.2328
+    Batch 50/391 - loss: 1.0903
+    Batch 100/391 - loss: 1.1343
+    Batch 150/391 - loss: 1.1407
+    Batch 200/391 - loss: 1.3319
+    Batch 250/391 - loss: 1.0925
+    Batch 300/391 - loss: 1.0818
+    Batch 350/391 - loss: 0.9961
+Epoch 5/15 - train_loss: 1.1112 - train_acc: 0.6063 - test_loss: 0.9919 - test_acc: 0.6543
+    Batch 0/391 - loss: 1.1073
+    Batch 50/391 - loss: 1.0103
+    Batch 100/391 - loss: 1.1196
+    Batch 150/391 - loss: 1.0965
+    Batch 200/391 - loss: 1.1233
+    Batch 250/391 - loss: 0.9082
+    Batch 300/391 - loss: 1.0209
+    Batch 350/391 - loss: 1.0941
+Epoch 6/15 - train_loss: 1.0433 - train_acc: 0.6303 - test_loss: 0.9371 - test_acc: 0.6717
+    Batch 0/391 - loss: 0.9819
+    Batch 50/391 - loss: 0.9083
+    Batch 100/391 - loss: 1.1482
+    Batch 150/391 - loss: 1.1144
+    Batch 200/391 - loss: 1.1487
+    Batch 250/391 - loss: 0.9933
+    Batch 300/391 - loss: 0.9911
+    Batch 350/391 - loss: 0.8772
+Epoch 7/15 - train_loss: 0.9920 - train_acc: 0.6480 - test_loss: 0.8952 - test_acc: 0.6889
+    Batch 0/391 - loss: 0.9636
+    Batch 50/391 - loss: 0.9298
+    Batch 100/391 - loss: 0.7364
+    Batch 150/391 - loss: 0.9190
+    Batch 200/391 - loss: 0.9179
+    Batch 250/391 - loss: 1.0053
+    Batch 300/391 - loss: 0.9039
+    Batch 350/391 - loss: 1.0225
+Epoch 8/15 - train_loss: 0.9583 - train_acc: 0.6629 - test_loss: 0.9020 - test_acc: 0.6797
+    Batch 0/391 - loss: 0.9613
+    Batch 50/391 - loss: 0.8774
+    Batch 100/391 - loss: 0.8939
+    Batch 150/391 - loss: 0.8307
+    Batch 200/391 - loss: 0.8451
+    Batch 250/391 - loss: 0.7939
+    Batch 300/391 - loss: 1.0687
+    Batch 350/391 - loss: 0.8360
+Epoch 9/15 - train_loss: 0.9299 - train_acc: 0.6714 - test_loss: 0.8626 - test_acc: 0.6962
+    Batch 0/391 - loss: 0.9282
+    Batch 50/391 - loss: 0.8555
+    Batch 100/391 - loss: 1.0069
+    Batch 150/391 - loss: 0.8684
+    Batch 200/391 - loss: 0.7005
+    Batch 250/391 - loss: 0.8223
+    Batch 300/391 - loss: 0.9625
+    Batch 350/391 - loss: 0.9357
+Epoch 10/15 - train_loss: 0.9060 - train_acc: 0.6810 - test_loss: 0.8145 - test_acc: 0.7184
+    Batch 0/391 - loss: 0.8304
+    Batch 50/391 - loss: 0.7403
+    Batch 100/391 - loss: 0.9224
+    Batch 150/391 - loss: 0.8239
+    Batch 200/391 - loss: 0.9631
+    Batch 250/391 - loss: 0.8033
+    Batch 300/391 - loss: 0.8795
+    Batch 350/391 - loss: 0.8192
+Epoch 11/15 - train_loss: 0.8886 - train_acc: 0.6876 - test_loss: 0.8083 - test_acc: 0.7152
+    Batch 0/391 - loss: 1.0501
+    Batch 50/391 - loss: 0.9487
+    Batch 100/391 - loss: 0.8887
+    Batch 150/391 - loss: 0.8652
+    Batch 200/391 - loss: 1.0238
+    Batch 250/391 - loss: 0.9471
+    Batch 300/391 - loss: 0.7633
+    Batch 350/391 - loss: 0.8611
+Epoch 12/15 - train_loss: 0.8673 - train_acc: 0.6955 - test_loss: 0.8253 - test_acc: 0.7168
+    Batch 0/391 - loss: 0.9531
+    Batch 50/391 - loss: 0.8640
+    Batch 100/391 - loss: 0.8403
+    Batch 150/391 - loss: 0.8025
+    Batch 200/391 - loss: 0.9676
+    Batch 250/391 - loss: 0.8661
+    Batch 300/391 - loss: 0.9193
+    Batch 350/391 - loss: 0.8907
+Epoch 13/15 - train_loss: 0.8596 - train_acc: 0.6977 - test_loss: 0.7821 - test_acc: 0.7248
+    Batch 0/391 - loss: 0.8730
+    Batch 50/391 - loss: 0.8911
+    Batch 100/391 - loss: 0.7675
+    Batch 150/391 - loss: 0.6739
+    Batch 200/391 - loss: 0.9429
+    Batch 250/391 - loss: 0.7078
+    Batch 300/391 - loss: 0.7793
+    Batch 350/391 - loss: 0.8335
+Epoch 14/15 - train_loss: 0.8431 - train_acc: 0.7027 - test_loss: 0.7788 - test_acc: 0.7288
+    Batch 0/391 - loss: 0.9099
+    Batch 50/391 - loss: 0.8948
+    Batch 100/391 - loss: 0.8234
+    Batch 150/391 - loss: 0.7899
+    Batch 200/391 - loss: 0.8104
+    Batch 250/391 - loss: 0.8006
+    Batch 300/391 - loss: 0.8280
+    Batch 350/391 - loss: 0.9792
+Epoch 15/15 - train_loss: 0.8334 - train_acc: 0.7079 - test_loss: 0.7558 - test_acc: 0.7301
+
+============================================================
+  Reg_dropout
+============================================================
+    Batch 0/391 - loss: 4.0859
+    Batch 50/391 - loss: 2.3057
+    Batch 100/391 - loss: 2.1843
+    Batch 150/391 - loss: 2.0832
+    Batch 200/391 - loss: 1.9340
+    Batch 250/391 - loss: 1.7773
+    Batch 300/391 - loss: 1.7523
+    Batch 350/391 - loss: 1.8310
+Epoch 1/15 - train_loss: 2.1243 - train_acc: 0.2634 - test_loss: 1.5805 - test_acc: 0.4224
+    Batch 0/391 - loss: 1.4990
+    Batch 50/391 - loss: 1.6252
+    Batch 100/391 - loss: 1.5445
+    Batch 150/391 - loss: 1.5904
+    Batch 200/391 - loss: 1.7309
+    Batch 250/391 - loss: 1.5255
+    Batch 300/391 - loss: 1.6432
+    Batch 350/391 - loss: 1.5638
+Epoch 2/15 - train_loss: 1.5915 - train_acc: 0.4203 - test_loss: 1.3551 - test_acc: 0.5102
+    Batch 0/391 - loss: 1.2712
+    Batch 50/391 - loss: 1.4229
+    Batch 100/391 - loss: 1.4572
+    Batch 150/391 - loss: 1.5614
+    Batch 200/391 - loss: 1.4737
+    Batch 250/391 - loss: 1.2187
+    Batch 300/391 - loss: 1.2837
+    Batch 350/391 - loss: 1.4102
+Epoch 3/15 - train_loss: 1.4319 - train_acc: 0.4827 - test_loss: 1.2411 - test_acc: 0.5489
+    Batch 0/391 - loss: 1.3679
+    Batch 50/391 - loss: 1.2690
+    Batch 100/391 - loss: 1.2958
+    Batch 150/391 - loss: 1.4348
+    Batch 200/391 - loss: 1.2522
+    Batch 250/391 - loss: 1.4478
+    Batch 300/391 - loss: 1.3708
+    Batch 350/391 - loss: 1.2614
+Epoch 4/15 - train_loss: 1.3315 - train_acc: 0.5203 - test_loss: 1.1697 - test_acc: 0.5823
+    Batch 0/391 - loss: 1.1948
+    Batch 50/391 - loss: 1.2979
+    Batch 100/391 - loss: 1.3193
+    Batch 150/391 - loss: 1.1541
+    Batch 200/391 - loss: 1.1700
+    Batch 250/391 - loss: 1.1400
+    Batch 300/391 - loss: 1.3426
+    Batch 350/391 - loss: 1.2426
+Epoch 5/15 - train_loss: 1.2446 - train_acc: 0.5539 - test_loss: 1.1019 - test_acc: 0.6101
+    Batch 0/391 - loss: 1.0535
+    Batch 50/391 - loss: 0.9982
+    Batch 100/391 - loss: 1.3058
+    Batch 150/391 - loss: 1.1061
+    Batch 200/391 - loss: 1.2286
+    Batch 250/391 - loss: 1.1319
+    Batch 300/391 - loss: 1.0585
+    Batch 350/391 - loss: 1.2124
+Epoch 6/15 - train_loss: 1.1720 - train_acc: 0.5781 - test_loss: 1.0213 - test_acc: 0.6399
+    Batch 0/391 - loss: 0.9870
+    Batch 50/391 - loss: 1.4231
+    Batch 100/391 - loss: 1.1260
+    Batch 150/391 - loss: 1.2194
+    Batch 200/391 - loss: 1.1798
+    Batch 250/391 - loss: 1.0332
+    Batch 300/391 - loss: 1.0838
+    Batch 350/391 - loss: 1.0896
+Epoch 7/15 - train_loss: 1.1165 - train_acc: 0.6014 - test_loss: 0.9391 - test_acc: 0.6688
+    Batch 0/391 - loss: 1.1676
+    Batch 50/391 - loss: 1.1448
+    Batch 100/391 - loss: 0.9780
+    Batch 150/391 - loss: 1.0500
+    Batch 200/391 - loss: 1.0393
+    Batch 250/391 - loss: 1.0620
+    Batch 300/391 - loss: 1.0578
+    Batch 350/391 - loss: 1.0638
+Epoch 8/15 - train_loss: 1.0482 - train_acc: 0.6244 - test_loss: 0.8846 - test_acc: 0.6880
+    Batch 0/391 - loss: 1.0935
+    Batch 50/391 - loss: 0.9302
+    Batch 100/391 - loss: 0.9872
+    Batch 150/391 - loss: 1.0827
+    Batch 200/391 - loss: 0.9228
+    Batch 250/391 - loss: 0.8820
+    Batch 300/391 - loss: 1.0954
+    Batch 350/391 - loss: 0.9410
+Epoch 9/15 - train_loss: 1.0017 - train_acc: 0.6430 - test_loss: 0.8382 - test_acc: 0.7018
+    Batch 0/391 - loss: 1.0152
+    Batch 50/391 - loss: 0.9481
+    Batch 100/391 - loss: 1.0068
+    Batch 150/391 - loss: 0.9704
+    Batch 200/391 - loss: 0.9034
+    Batch 250/391 - loss: 0.9783
+    Batch 300/391 - loss: 0.8847
+    Batch 350/391 - loss: 0.9030
+Epoch 10/15 - train_loss: 0.9588 - train_acc: 0.6596 - test_loss: 0.8088 - test_acc: 0.7136
+    Batch 0/391 - loss: 0.9126
+    Batch 50/391 - loss: 0.8955
+    Batch 100/391 - loss: 0.8862
+    Batch 150/391 - loss: 0.8438
+    Batch 200/391 - loss: 0.8487
+    Batch 250/391 - loss: 0.8098
+    Batch 300/391 - loss: 0.8830
+    Batch 350/391 - loss: 0.9395
+Epoch 11/15 - train_loss: 0.9250 - train_acc: 0.6743 - test_loss: 0.7793 - test_acc: 0.7261
+    Batch 0/391 - loss: 1.0687
+    Batch 50/391 - loss: 0.8220
+    Batch 100/391 - loss: 1.0162
+    Batch 150/391 - loss: 0.7971
+    Batch 200/391 - loss: 1.1296
+    Batch 250/391 - loss: 0.7523
+    Batch 300/391 - loss: 1.1384
+    Batch 350/391 - loss: 0.8276
+Epoch 12/15 - train_loss: 0.8946 - train_acc: 0.6843 - test_loss: 0.7447 - test_acc: 0.7377
+    Batch 0/391 - loss: 0.8228
+    Batch 50/391 - loss: 0.6916
+    Batch 100/391 - loss: 0.7268
+    Batch 150/391 - loss: 1.0124
+    Batch 200/391 - loss: 0.8890
+    Batch 250/391 - loss: 0.7708
+    Batch 300/391 - loss: 1.0459
+    Batch 350/391 - loss: 0.8126
+Epoch 13/15 - train_loss: 0.8748 - train_acc: 0.6897 - test_loss: 0.7272 - test_acc: 0.7497
+    Batch 0/391 - loss: 0.8750
+    Batch 50/391 - loss: 0.9624
+    Batch 100/391 - loss: 0.8939
+    Batch 150/391 - loss: 1.0651
+    Batch 200/391 - loss: 0.8165
+    Batch 250/391 - loss: 0.9293
+    Batch 300/391 - loss: 0.8113
+    Batch 350/391 - loss: 0.7000
+Epoch 14/15 - train_loss: 0.8493 - train_acc: 0.7026 - test_loss: 0.7224 - test_acc: 0.7425
+    Batch 0/391 - loss: 0.8199
+    Batch 50/391 - loss: 0.7968
+    Batch 100/391 - loss: 0.7260
+    Batch 150/391 - loss: 0.9385
+    Batch 200/391 - loss: 0.8982
+    Batch 250/391 - loss: 0.7923
+    Batch 300/391 - loss: 1.0213
+    Batch 350/391 - loss: 0.6430
+Epoch 15/15 - train_loss: 0.8334 - train_acc: 0.7070 - test_loss: 0.7381 - test_acc: 0.7423
+
+============================================================
+  Reg_both
+============================================================
+    Batch 0/391 - loss: 4.4729
+    Batch 50/391 - loss: 2.2899
+    Batch 100/391 - loss: 1.9647
+    Batch 150/391 - loss: 2.0075
+    Batch 200/391 - loss: 1.7894
+    Batch 250/391 - loss: 1.8059
+    Batch 300/391 - loss: 1.6802
+    Batch 350/391 - loss: 1.6467
+Epoch 1/15 - train_loss: 2.0807 - train_acc: 0.2918 - test_loss: 1.5175 - test_acc: 0.4419
+    Batch 0/391 - loss: 1.6163
+    Batch 50/391 - loss: 1.6597
+    Batch 100/391 - loss: 1.5239
+    Batch 150/391 - loss: 1.4527
+    Batch 200/391 - loss: 1.6088
+    Batch 250/391 - loss: 1.5130
+    Batch 300/391 - loss: 1.4598
+    Batch 350/391 - loss: 1.5241
+Epoch 2/15 - train_loss: 1.5523 - train_acc: 0.4340 - test_loss: 1.3541 - test_acc: 0.5145
+    Batch 0/391 - loss: 1.4126
+    Batch 50/391 - loss: 1.2199
+    Batch 100/391 - loss: 1.3958
+    Batch 150/391 - loss: 1.4917
+    Batch 200/391 - loss: 1.4310
+    Batch 250/391 - loss: 1.4188
+    Batch 300/391 - loss: 1.5148
+    Batch 350/391 - loss: 1.4032
+Epoch 3/15 - train_loss: 1.3969 - train_acc: 0.4930 - test_loss: 1.1789 - test_acc: 0.5774
+    Batch 0/391 - loss: 1.3208
+    Batch 50/391 - loss: 1.3179
+    Batch 100/391 - loss: 1.4360
+    Batch 150/391 - loss: 1.1625
+    Batch 200/391 - loss: 1.4494
+    Batch 250/391 - loss: 1.1273
+    Batch 300/391 - loss: 1.4404
+    Batch 350/391 - loss: 1.2823
+Epoch 4/15 - train_loss: 1.3019 - train_acc: 0.5283 - test_loss: 1.1525 - test_acc: 0.5850
+    Batch 0/391 - loss: 1.2494
+    Batch 50/391 - loss: 1.2804
+    Batch 100/391 - loss: 1.2093
+    Batch 150/391 - loss: 1.2056
+    Batch 200/391 - loss: 1.1456
+    Batch 250/391 - loss: 1.3290
+    Batch 300/391 - loss: 1.3426
+    Batch 350/391 - loss: 1.1457
+Epoch 5/15 - train_loss: 1.2232 - train_acc: 0.5597 - test_loss: 1.0698 - test_acc: 0.6145
+    Batch 0/391 - loss: 1.1151
+    Batch 50/391 - loss: 1.2206
+    Batch 100/391 - loss: 1.0838
+    Batch 150/391 - loss: 1.1781
+    Batch 200/391 - loss: 1.1484
+    Batch 250/391 - loss: 1.2419
+    Batch 300/391 - loss: 1.0079
+    Batch 350/391 - loss: 1.1768
+Epoch 6/15 - train_loss: 1.1779 - train_acc: 0.5769 - test_loss: 0.9863 - test_acc: 0.6444
+    Batch 0/391 - loss: 1.2088
+    Batch 50/391 - loss: 1.2289
+    Batch 100/391 - loss: 1.2829
+    Batch 150/391 - loss: 0.9632
+    Batch 200/391 - loss: 1.3028
+    Batch 250/391 - loss: 1.2590
+    Batch 300/391 - loss: 1.1320
+    Batch 350/391 - loss: 1.0548
+Epoch 7/15 - train_loss: 1.1375 - train_acc: 0.5907 - test_loss: 0.9507 - test_acc: 0.6578
+    Batch 0/391 - loss: 1.2099
+    Batch 50/391 - loss: 0.9135
+    Batch 100/391 - loss: 1.1397
+    Batch 150/391 - loss: 1.1491
+    Batch 200/391 - loss: 1.0097
+    Batch 250/391 - loss: 1.1253
+    Batch 300/391 - loss: 1.0317
+    Batch 350/391 - loss: 1.1963
+Epoch 8/15 - train_loss: 1.0928 - train_acc: 0.6108 - test_loss: 0.9077 - test_acc: 0.6782
+    Batch 0/391 - loss: 0.9035
+    Batch 50/391 - loss: 1.1115
+    Batch 100/391 - loss: 0.9973
+    Batch 150/391 - loss: 1.0359
+    Batch 200/391 - loss: 1.0156
+    Batch 250/391 - loss: 1.0522
+    Batch 300/391 - loss: 1.1299
+    Batch 350/391 - loss: 1.0188
+Epoch 9/15 - train_loss: 1.0530 - train_acc: 0.6249 - test_loss: 0.8997 - test_acc: 0.6795
+    Batch 0/391 - loss: 1.0262
+    Batch 50/391 - loss: 1.0318
+    Batch 100/391 - loss: 1.1340
+    Batch 150/391 - loss: 1.0878
+    Batch 200/391 - loss: 1.0158
+    Batch 250/391 - loss: 0.9283
+    Batch 300/391 - loss: 1.0855
+    Batch 350/391 - loss: 1.1495
+Epoch 10/15 - train_loss: 1.0316 - train_acc: 0.6345 - test_loss: 0.8874 - test_acc: 0.6859
+    Batch 0/391 - loss: 0.9766
+    Batch 50/391 - loss: 1.0288
+    Batch 100/391 - loss: 0.9135
+    Batch 150/391 - loss: 1.0346
+    Batch 200/391 - loss: 1.0633
+    Batch 250/391 - loss: 1.0188
+    Batch 300/391 - loss: 1.0054
+    Batch 350/391 - loss: 1.0079
+Epoch 11/15 - train_loss: 1.0056 - train_acc: 0.6445 - test_loss: 0.8820 - test_acc: 0.6843
+    Batch 0/391 - loss: 1.0734
+    Batch 50/391 - loss: 0.9255
+    Batch 100/391 - loss: 1.1196
+    Batch 150/391 - loss: 1.0489
+    Batch 200/391 - loss: 0.9623
+    Batch 250/391 - loss: 0.8507
+    Batch 300/391 - loss: 1.1967
+    Batch 350/391 - loss: 1.1080
+Epoch 12/15 - train_loss: 0.9866 - train_acc: 0.6491 - test_loss: 0.8527 - test_acc: 0.6988
+    Batch 0/391 - loss: 0.9098
+    Batch 50/391 - loss: 0.8637
+    Batch 100/391 - loss: 0.9223
+    Batch 150/391 - loss: 0.9730
+    Batch 200/391 - loss: 0.9016
+    Batch 250/391 - loss: 0.8546
+    Batch 300/391 - loss: 0.7992
+    Batch 350/391 - loss: 1.0239
+Epoch 13/15 - train_loss: 0.9736 - train_acc: 0.6560 - test_loss: 0.7919 - test_acc: 0.7263
+    Batch 0/391 - loss: 0.9431
+    Batch 50/391 - loss: 0.9457
+    Batch 100/391 - loss: 1.0131
+    Batch 150/391 - loss: 0.9321
+    Batch 200/391 - loss: 0.9370
+    Batch 250/391 - loss: 1.0900
+    Batch 300/391 - loss: 1.0820
+    Batch 350/391 - loss: 1.0380
+Epoch 14/15 - train_loss: 0.9592 - train_acc: 0.6589 - test_loss: 0.8279 - test_acc: 0.7124
+    Batch 0/391 - loss: 1.0042
+    Batch 50/391 - loss: 1.2009
+    Batch 100/391 - loss: 1.1550
+    Batch 150/391 - loss: 1.0376
+    Batch 200/391 - loss: 0.9436
+    Batch 250/391 - loss: 0.9946
+    Batch 300/391 - loss: 1.1235
+    Batch 350/391 - loss: 0.6781
+Epoch 15/15 - train_loss: 0.9474 - train_acc: 0.6636 - test_loss: 0.8152 - test_acc: 0.7165
