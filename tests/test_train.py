@@ -3,7 +3,6 @@ import pytest
 import torch
 import torch.nn as nn
 
-from src.network import ParameterType
 from src.train import train_epoch, evaluate, train
 
 
@@ -28,7 +27,7 @@ class FakeLayerWithParams:
         self.weight = weight
 
     def parameters(self):
-        return {ParameterType.WEIGHT: self.weight}
+        return {"weight": self.weight}
 
 
 class FakeModel:
@@ -263,7 +262,7 @@ class TestTrain:
             epochs=3,
             checkpoint_path=cp,
         )
-        assert set(history.keys()) == {"train_loss", "train_acc", "test_loss", "test_acc"}
+        assert set(history.keys()) == {"train_loss", "train_acc", "test_loss", "test_acc", "iteration_loss"}
         assert len(history["train_loss"]) == 3
         assert len(history["train_acc"]) == 3
         assert len(history["test_loss"]) == 3
@@ -330,7 +329,7 @@ class TestTrain:
 
         saved_state = torch.load(cp, weights_only=False)
         # The param is on layer index 2 (after FakeLayerWithTraining, FakeLayerWithoutTraining)
-        key = (2, ParameterType.WEIGHT)
+        key = (2, "weight")
         assert torch.allclose(p.data, saved_state[key])
 
     def test_scheduler_stepped(self, setup):
@@ -411,4 +410,4 @@ class TestTrain:
         assert os.path.exists(cp)
         saved = torch.load(cp, weights_only=False)
         # Key should be stable tuple, not id()
-        assert (2, ParameterType.WEIGHT) in saved
+        assert (2, "weight") in saved

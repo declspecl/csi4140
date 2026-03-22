@@ -95,9 +95,7 @@ class TestBackward:
                         x_plus[n, c, h, w] += eps
                         x_minus = x.clone()
                         x_minus[n, c, h, w] -= eps
-                        conv._input_cache = conv._pad(x_plus)
                         f_plus = conv.forward(x_plus).sum()
-                        conv._input_cache = conv._pad(x_minus)
                         f_minus = conv.forward(x_minus).sum()
                         grad_in_numerical[n, c, h, w] = (f_plus - f_minus) / (2 * eps)
 

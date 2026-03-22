@@ -18,4 +18,6 @@ class ReLU(Propagatable):
             f"dtype mismatch: grad_output={grad_output.dtype}, input={self._cached_input.dtype}"
         )
 
-        return grad_output * (self._cached_input > 0).to(grad_output.dtype)
+        grad = grad_output * (self._cached_input > 0).to(grad_output.dtype)
+        self._cached_input = None  # FIX: free cached input to reduce peak GPU memory
+        return grad

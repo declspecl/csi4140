@@ -31,12 +31,23 @@ class Adam(BaseOptimizer):
         super().step()
 
     def _update(self, param: nn.Parameter, grad: torch.Tensor) -> None:
-        m = self.beta1 * self.m[id(param)] + (1.0 - self.beta1) * grad
-        v = self.beta2 * self.v[id(param)] + (1.0 - self.beta2) * grad**2
-        self.m[id(param)] = m
-        self.v[id(param)] = v
+        pid = id(param)
+        # FIX: optimizer state (m, v) is created on CPU at init time. When params
+        # are moved to GPU via model.to(device), the state must follow. We lazily
+        # move on first use rather than requiring a separate to(device) call.
+        if self.m[pid].device != param.device:
+            self.m[pid] = self.m[pid].to(param.device)
+            self.v[pid] = self.v[pid].to(param.device)
 
-        m_hat = m / (1.0 - self.beta1**self.t)
-        v_hat = v / (1.0 - self.beta2**self.t)
+        # FIX: use in-place ops (mul_, add_, addcmul_, addcdiv_) instead of
+        # creating new tensors. The original code allocated ~6 intermediates per
+        # parameter per step, which compounded across all params to cause OOM.
+        self.m[pid].mul_(self.beta1).add_(grad, alpha=1.0 - self.beta1)
+        self.v[pid].mul_(self.beta2).addcmul_(grad, grad, value=1.0 - self.beta2)
 
-        param.data -= self.learning_rate * m_hat / (torch.sqrt(v_hat) + self.epsilon)
+        bias1 = 1.0 - self.beta1**self.t
+        bias2 = 1.0 - self.beta2**self.t
+
+        step_size = self.learning_rate / bias1
+        denom = (self.v[pid] / bias2).sqrt_().add_(self.epsilon)
+        param.data.addcdiv_(self.m[pid], denom, value=-step_size)

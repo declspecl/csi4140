@@ -8,6 +8,17 @@ class NeuralNetwork:
         self.layers = layers
         self.training = True
 
+    def to(self, device: str) -> "NeuralNetwork":
+        """FIX: model params (nn.Parameter) are created on CPU. DataLoader tensors
+        are moved to GPU via .to(device) in the training loop, causing device
+        mismatch errors. This moves all params to the target device."""
+        for layer in self.layers:
+            for _, param in layer.parameters().items():
+                param.data = param.data.to(device)
+                if param.grad is not None:
+                    param.grad = param.grad.to(device)
+        return self
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         for layer in self.layers:
             x = layer.forward(x)
