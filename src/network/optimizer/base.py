@@ -21,8 +21,8 @@ class BaseOptimizer(Optimizer):
 
     @learning_rate.setter
     def learning_rate(self, value: float) -> None:
-        if value <= 0:
-            raise ValueError(f"Learning rate must be positive, got {value}")
+        if value < 0:
+            raise ValueError(f"Learning rate must be non-negative, got {value}")
         self._learning_rate = value
 
     def zero_grad(self) -> None:
