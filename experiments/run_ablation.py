@@ -28,6 +28,7 @@ ABLATION_EPOCHS = int(os.getenv("ABLATION_EPOCHS", 15))
 BATCH_SIZE = 128
 RESULTS_DIR = "results/ablation"
 
+
 def run_experiment(name, model, optimizer, scheduler=None, epochs=ABLATION_EPOCHS):
     print(f"\n{'=' * 60}")
     print(f"  {name}")
@@ -50,6 +51,7 @@ def run_experiment(name, model, optimizer, scheduler=None, epochs=ABLATION_EPOCH
     )
     return history
 
+
 def build_model_with_dropout(p=0.5):
     return NeuralNetwork(
         [
@@ -68,6 +70,7 @@ def build_model_with_dropout(p=0.5):
         ]
     )
 
+
 def plot_comparison(results, title, ylabel, key, save_path):
     plt.figure(figsize=(8, 5))
     for label, history in results.items():
@@ -81,6 +84,7 @@ def plot_comparison(results, title, ylabel, key, save_path):
     plt.close()
     print(f"Saved: {save_path}")
 
+
 def save_results(experiment_name, results):
     path = os.path.join(RESULTS_DIR, f"{experiment_name}.json")
     serializable = {}
@@ -89,6 +93,7 @@ def save_results(experiment_name, results):
     with open(path, "w") as f:
         json.dump(serializable, f, indent=2)
     print(f"Saved: {path}")
+
 
 def experiment_lr_decay():
     print("\n\n" + "=" * 60)
@@ -127,6 +132,7 @@ def experiment_lr_decay():
     )
     save_results("exp1_lr_decay", results)
     return results
+
 
 def experiment_regularization():
     print("\n\n" + "=" * 60)
@@ -168,6 +174,7 @@ def experiment_regularization():
     save_results("exp2_regularization", results)
     return results
 
+
 def experiment_l2_lambda():
     print("\n\n" + "=" * 60)
     print("  EXPERIMENT 3: L2 Regularization Lambda")
@@ -196,6 +203,7 @@ def experiment_l2_lambda():
     )
     save_results("exp3_l2_lambda", results)
     return results
+
 
 def experiment_optimizer():
     print("\n\n" + "=" * 60)
@@ -229,6 +237,7 @@ def experiment_optimizer():
     )
     save_results("exp4_optimizer", results)
     return results
+
 
 def experiment_adam_betas():
     print("\n\n" + "=" * 60)
@@ -268,6 +277,7 @@ def experiment_adam_betas():
     save_results("exp5_adam_betas", results)
     return results
 
+
 def run_experiment_aug(name, model, optimizer, use_aug, epochs=ABLATION_EPOCHS):
     print(f"\n{'=' * 60}")
     print(f"  {name} (Augmentation: {use_aug})")
@@ -288,6 +298,7 @@ def run_experiment_aug(name, model, optimizer, use_aug, epochs=ABLATION_EPOCHS):
         checkpoint_path=os.path.join(RESULTS_DIR, f"{name.replace(' ', '_')}.pt"),
     )
     return history
+
 
 def experiment_augmentation():
     print("\n\n" + "=" * 60)
@@ -321,6 +332,7 @@ def experiment_augmentation():
     save_results("exp6_augmentation", results)
     return results
 
+
 def build_custom_cnn(filters=[32, 64, 128]):
     f1, f2, f3 = filters
     return NeuralNetwork(
@@ -336,6 +348,7 @@ def build_custom_cnn(filters=[32, 64, 128]):
             FullyConnected(512, 10, Softmax()),
         ]
     )
+
 
 def experiment_width():
     print("\n\n" + "=" * 60)
@@ -372,6 +385,7 @@ def experiment_width():
     save_results("exp7_width", results)
     return results
 
+
 def build_cnn_with_activation(activation_class):
     return NeuralNetwork(
         [
@@ -386,6 +400,7 @@ def build_cnn_with_activation(activation_class):
             FullyConnected(512, 10, Softmax()),
         ]
     )
+
 
 def experiment_activation():
     print("\n\n" + "=" * 60)
@@ -419,6 +434,7 @@ def experiment_activation():
     save_results("exp8_activation", results)
     return results
 
+
 def main():
     parser = argparse.ArgumentParser(description="Run specific ablation experiments.")
     parser.add_argument(
@@ -449,6 +465,7 @@ def main():
             func()
 
     print("\n\nDone!")
+
 
 if __name__ == "__main__":
     main()

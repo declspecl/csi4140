@@ -4,7 +4,7 @@ from src.data.cifar10 import get_cifar10_dataloaders
 from src.models.cifar10_cnn import build_cifar10_cnn
 from src.network.loss.cross_entropy import CrossEntropy
 from src.network.optimizer.adam import Adam
-from src.network.scheduler.cosine import CosineDecay
+from src.network.scheduler.step import StepDecay
 from src.train import train
 from src.utils.visualization import plot_all
 
@@ -20,8 +20,8 @@ def main():
     model = build_cifar10_cnn()
     model.to(device)
     loss_fn = CrossEntropy()
-    optimizer = Adam(model.parameters(), learning_rate=learning_rate)
-    scheduler = CosineDecay(optimizer, epochs=epochs)
+    optimizer = Adam(model.parameters(), learning_rate=learning_rate, beta1=0.8, beta2=0.99)
+    scheduler = StepDecay(optimizer, step_size=5, decay_factor=0.5)
 
     history = train(
         model=model,
