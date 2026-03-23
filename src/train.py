@@ -2,7 +2,6 @@ import torch
 
 
 def _collect_params(model):
-    """Collect all parameters from model layers with stable (layer_idx, param_name_str) keys."""
     params = []
     for i, layer in enumerate(model.layers):
         for name, param in layer.parameters().items():
@@ -12,11 +11,6 @@ def _collect_params(model):
 
 
 def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu", iteration_losses=None) -> tuple[float, float]:
-    """
-    Runs one full pass over train_loader.
-    Returns: (avg_loss, accuracy) for the epoch.
-    If iteration_losses list is provided, appends each batch loss to it.
-    """
     model.train()
     total_loss = 0.0
     correct = 0
@@ -59,10 +53,6 @@ def train_epoch(model, train_loader, loss_fn, optimizer, device="cpu", iteration
 
 
 def evaluate(model, test_loader, loss_fn, device="cpu") -> tuple[float, float]:
-    """
-    Evaluates on test_loader without updating weights.
-    Returns: (avg_loss, accuracy).
-    """
     model.eval()
     total_loss = 0.0
     correct = 0
@@ -97,12 +87,6 @@ def train(
     device: str = "cpu",
     checkpoint_path: str = "best_model.pt",
 ) -> dict:
-    """
-    Runs full training for `epochs` epochs.
-    Returns history dict with train_loss, train_acc, test_loss, test_acc.
-    Saves model layers' state when test_acc improves.
-    Prints per-epoch summary.
-    """
     history = {
         "train_loss": [],
         "train_acc": [],

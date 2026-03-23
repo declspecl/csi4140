@@ -77,7 +77,6 @@ class TestBackward:
             fc.backward(torch.randn(3, 8))
 
     def test_grad_weight_numerical(self):
-        """Verify grad_weight via finite differences."""
         torch.manual_seed(42)
         fc = FullyConnected(in_features=3, out_features=2, activation=Identity())
         x = torch.randn(3, 4)
@@ -106,7 +105,6 @@ class TestBackward:
         assert torch.allclose(grad_w_analytical, grad_w_numerical, atol=1e-3)
 
     def test_grad_input_numerical(self):
-        """Verify grad_input via finite differences."""
         torch.manual_seed(42)
         fc = FullyConnected(in_features=3, out_features=2, activation=ReLU())
         x = torch.randn(3, 4)

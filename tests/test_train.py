@@ -6,8 +6,6 @@ import torch.nn as nn
 from src.train import train_epoch, evaluate, train
 
 
-# --- Fake components for testing ---
-
 
 class FakeLayerWithTraining:
     def __init__(self):
@@ -91,20 +89,16 @@ def make_loader(batches):
     return batches
 
 
-# --- Tests ---
-
-
 class TestTrainEpoch:
     @pytest.fixture
     def setup(self):
         torch.manual_seed(0)
-        # probs shape: (classes=3, batch=4), class 1 has highest prob for all samples
         probs = torch.zeros(3, 4)
         probs[1, :] = 1.0
         model = FakeModel(probs)
         loss_fn = FakeLoss(loss_value=0.5)
         optimizer = FakeOptimizer()
-        labels = torch.ones(4, dtype=torch.long)  # all class 1 = all correct
+        labels = torch.ones(4, dtype=torch.long)
         loader = [(torch.randn(4, 3, 2, 2), labels)]
         return model, loader, loss_fn, optimizer
 
@@ -309,7 +303,6 @@ class TestTrain:
             checkpoint_path=cp,
         )
         saved_state = torch.load(cp, weights_only=False)
-        # Keys should be (layer_idx, param_name) tuples, not id() ints
         for key in saved_state:
             assert isinstance(key, tuple)
             assert isinstance(key[0], int)
@@ -328,7 +321,6 @@ class TestTrain:
         )
 
         saved_state = torch.load(cp, weights_only=False)
-        # The param is on layer index 2 (after FakeLayerWithTraining, FakeLayerWithoutTraining)
         key = (2, "weight")
         assert torch.allclose(p.data, saved_state[key])
 
@@ -351,7 +343,6 @@ class TestTrain:
 
     def test_no_scheduler(self, setup):
         model, train_loader, test_loader, loss_fn, optimizer, cp, _ = setup
-        # Should not raise when scheduler is None
         history = train(
             model,
             train_loader,
@@ -382,7 +373,6 @@ class TestTrain:
         assert "test_acc" in captured.out
 
     def test_checkpoint_only_on_improvement(self, tmp_path):
-        """Test that checkpoint is saved only when test_acc improves."""
         call_count = 0
 
         class DegradingModel(FakeModel):
@@ -409,5 +399,4 @@ class TestTrain:
 
         assert os.path.exists(cp)
         saved = torch.load(cp, weights_only=False)
-        # Key should be stable tuple, not id()
         assert (2, "weight") in saved

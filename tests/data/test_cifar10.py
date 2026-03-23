@@ -49,14 +49,11 @@ class TestGetCifar10Dataloaders:
         assert labels.dtype == torch.int64
 
     def test_train_shuffle_enabled(self, mock_cifar10):
-        """Train loader should have shuffle enabled (via sampler)."""
         train_loader, _ = get_cifar10_dataloaders()
-        # RandomSampler is used when shuffle=True
         sampler_name = type(train_loader.sampler).__name__
         assert sampler_name == "RandomSampler"
 
     def test_test_shuffle_disabled(self, mock_cifar10):
-        """Test loader should have shuffle disabled."""
         _, test_loader = get_cifar10_dataloaders()
         sampler_name = type(test_loader.sampler).__name__
         assert sampler_name == "SequentialSampler"
@@ -86,7 +83,6 @@ class TestGetCifar10Dataloaders:
 
 class TestAugmentation:
     def test_augmentation_enabled_has_four_transforms(self, mock_cifar10):
-        """With augmentation: RandomHorizontalFlip, RandomCrop, ToTensor, Normalize."""
         get_cifar10_dataloaders(use_augmentation=True)
         train_call = mock_cifar10.call_args_list[0]
         train_transform = train_call.kwargs["transform"]
@@ -97,7 +93,6 @@ class TestAugmentation:
         assert isinstance(train_transform.transforms[3], transforms.Normalize)
 
     def test_augmentation_disabled_has_two_transforms(self, mock_cifar10):
-        """Without augmentation: ToTensor, Normalize only."""
         get_cifar10_dataloaders(use_augmentation=False)
         train_call = mock_cifar10.call_args_list[0]
         train_transform = train_call.kwargs["transform"]
@@ -106,7 +101,6 @@ class TestAugmentation:
         assert isinstance(train_transform.transforms[1], transforms.Normalize)
 
     def test_test_transform_never_augmented(self, mock_cifar10):
-        """Test set should never have augmentation regardless of the flag."""
         get_cifar10_dataloaders(use_augmentation=True)
         test_call = mock_cifar10.call_args_list[1]
         test_transform = test_call.kwargs["transform"]

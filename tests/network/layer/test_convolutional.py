@@ -76,7 +76,6 @@ class TestBackward:
             conv.backward(torch.randn(2, 4, 6, 6))
 
     def test_grad_input_numerical(self):
-        """Verify grad_input via finite differences."""
         torch.manual_seed(42)
         conv = Convolutional(in_channels=2, out_channels=2, kernel_size=3, stride=1, padding=0)
         x = torch.randn(1, 2, 5, 5)
@@ -102,7 +101,6 @@ class TestBackward:
         assert torch.allclose(grad_in_analytical, grad_in_numerical, atol=1e-3)
 
     def test_grad_weight_numerical(self):
-        """Verify grad_weight via finite differences."""
         torch.manual_seed(42)
         conv = Convolutional(in_channels=2, out_channels=2, kernel_size=3, stride=1, padding=0)
         x = torch.randn(1, 2, 5, 5)
