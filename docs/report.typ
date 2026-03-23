@@ -17,15 +17,15 @@
 
 = Problem Statement
 
-The goal is to classify 32 #sym.times 32 RGB images from the CIFAR-10 dataset into 10 categories: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, and truck. The dataset has 50,000 training images and 10,000 test images.
+We are classifying 32 #sym.times 32 RGB images from the CIFAR-10 dataset into 10 categories: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, and truck. There are 50,000 training images and 10,000 test images.
 
-The constraint is that all layers, optimizers, and schedulers must be implemented from scratch in PyTorch without using any built-in nn.Module layers or optimizer classes. This forces us to work through the math directly rather than calling into pre-built abstractions.
+The constraint is that all layers, optimizers, and schedulers must be implemented from scratch in PyTorch, without using any built-in `nn.Module` layers or optimizer classes. This means we had to work through the math directly and write the forward and backward passes ourselves rather than relying on pre-built abstractions.
 
 = Design and Implementation
 
 == Model Architecture
 
-The model is a three-block CNN followed by two fully connected layers. We use strided convolutions for spatial downsampling rather than pooling layers.
+Our model is a three-block CNN with two fully connected layers on top. Rather than using pooling layers for spatial downsampling, we use strided convolutions, which let the network learn how to downsample rather than just taking the max or average of a patch.
 
 #figure(
   table(
@@ -43,55 +43,55 @@ The model is a three-block CNN followed by two fully connected layers. We use st
   caption: [Baseline model architecture. N is batch size. Conv layers use (N, C, H, W); fully connected layers use (features, N).]
 )
 
-Here is how each component works:
+Below is a breakdown of how we implemented each component:
 
-- *Convolutional layer:* A convolution is just a dot product between the kernel and each local patch of the input. Instead of looping over every position, we use `F.unfold` to collect all patches into a single matrix: for each of the $H_"out" dot W_"out"$ positions, it extracts the $C_"in" dot K^2$ values the kernel would see and lays them out as a column, giving shape $(N, C_"in" dot K^2, H_"out" dot W_"out")$. Then one matrix multiply with the weight matrix (reshaped to $(C_"out", C_"in" dot K^2)$) computes all output positions at once. For the backward pass, the weight gradient is $nabla_"mat" dot X_"unfolded"^top$ summed over the batch (each output position contributed to a weight based on what patch it saw), and the input gradient is $W^top dot nabla_"mat"$ which gives the per-patch error signals back in column form, then `F.fold` adds overlapping contributions together and reconstructs the spatial layout.
+- *Convolutional layer:* At its core, a convolution is a dot product between the kernel and each local patch of the input. The naive way to do this is to loop over every spatial position, but that is very slow. Instead, we use `F.unfold` to extract all the patches and lay them into a single matrix. For each of the $H_"out" dot W_"out"$ positions, it grabs the $C_"in" dot K^2$ values the kernel would see and lines them up as a column, giving shape $(N, C_"in" dot K^2, H_"out" dot W_"out")$. From there, one matrix multiply with the weight matrix (reshaped to $(C_"out", C_"in" dot K^2)$) computes every output position at once. For the backward pass, the weight gradient is $nabla_"mat" dot X_"unfolded"^top$ summed over the batch, and the input gradient is $W^top dot nabla_"mat"$, which gives per-patch error signals in column form. Then `F.fold` adds up all the overlapping contributions and reconstructs the original spatial layout.
 
-- *Activation layers:* ReLU is $(x + |x|) / 2$; the backward pass multiplies the incoming gradient by $(x > 0)$. Softmax subtracts the per-sample max before exponentiation for numerical stability, then normalizes column-wise.
+- *Activation layers:* ReLU is $(x + |x|) / 2$; the backward pass just multiplies the incoming gradient by $(x > 0)$. Softmax subtracts the per-sample max before exponentiating (for numerical stability) and then normalizes column-wise.
 
-- *Flatten layer:* Reshapes $(N, C, H, W)$ to $(C dot H dot W, N)$ to match the column-major convention expected by the fully connected layers. The input shape is cached for the backward pass.
+- *Flatten layer:* Reshapes $(N, C, H, W)$ to $(C dot H dot W, N)$ so it fits the column-major convention our fully connected layers expect. We cache the input shape so the backward pass can undo the reshape.
 
-- *Fully connected layer:* Forward pass computes $Z = W X + b$ and applies the activation. Backward pass: $nabla W = nabla Z dot X^top$, $nabla b = sum_"batch" nabla Z$, $nabla X = W^top dot nabla Z$.
+- *Fully connected layer:* Forward is $Z = W X + b$ followed by the activation. Backward: $nabla W = nabla Z dot X^top$, $nabla b = sum_"batch" nabla Z$, $nabla X = W^top dot nabla Z$.
 
-- *Dropout layer:* Uses inverted dropout. During training, a binary mask is sampled with keep probability $(1 - p)$ and immediately scaled by $1 / (1 - p)$, so the expected value of the output matches the input. The same mask is applied in the backward pass. Dropout is skipped entirely during evaluation.
+- *Dropout layer:* We use inverted dropout. During training, a binary mask is sampled with keep probability $(1 - p)$ and immediately scaled by $1 / (1 - p)$ so that the expected output value stays the same as the input. The same mask is reused in the backward pass, and during evaluation dropout is skipped.
 
 == Methods
 
-*Loss function.* Cross-entropy over the softmax probabilities:
+*Loss function.* We use cross-entropy over the softmax probabilities:
 $cal(L) = -1/N sum_(i=1)^N log p_(y_i)$,
-where $p_(y_i)$ is the predicted probability for the true class. The gradient is $-1/(N p_(y_i))$ at the true class index and zero everywhere else.
+where $p_(y_i)$ is the predicted probability for the correct class. The gradient works out to $-1/(N p_(y_i))$ at the true class index and zero everywhere else.
 
-*Optimizers.* All three share a `BaseOptimizer` base class that handles parameter iteration and optional regularization:
+*Optimizers.* We implemented three optimizers, all sharing a `BaseOptimizer` base class that handles parameter iteration and optional regularization:
 
 - *SGD:* $w arrow.l w - eta nabla_w cal(L)$
 
-- *SGD + Momentum (EMA style):* maintains a velocity per parameter, $v arrow.l beta v + (1 - beta) nabla_w cal(L)$, then $w arrow.l w - eta v$. The EMA formulation keeps $v$ in the same magnitude range as the gradient, unlike the standard momentum formulation which accumulates unboundedly.
+- *SGD + Momentum (EMA style):* Maintains a velocity per parameter: $v arrow.l beta v + (1 - beta) nabla_w cal(L)$, then $w arrow.l w - eta v$. We used the EMA formulation because it keeps $v$ in the same magnitude range as the gradient, unlike the standard momentum formulation which accumulates unboundedly.
 
-- *Adam:* $m arrow.l beta_1 m + (1 - beta_1) g$, $v arrow.l beta_2 v + (1 - beta_2) g^2$, with bias correction $hat(m) = m / (1 - beta_1^t)$, $hat(v) = v / (1 - beta_2^t)$, then $w arrow.l w - eta hat(m) / (sqrt(hat(v)) + epsilon)$. Defaults: $beta_1 = 0.9$, $beta_2 = 0.999$, $epsilon = 10^(-8)$.
+- *Adam:* $m arrow.l beta_1 m + (1 - beta_1) g$, $v arrow.l beta_2 v + (1 - beta_2) g^2$, bias-corrected as $hat(m) = m / (1 - beta_1^t)$, $hat(v) = v / (1 - beta_2^t)$, then $w arrow.l w - eta hat(m) / (sqrt(hat(v)) + epsilon)$. We used the standard defaults: $beta_1 = 0.9$, $beta_2 = 0.999$, $epsilon = 10^(-8)$.
 
-*Learning rate schedules.* Cosine decay:
+*Learning rate schedules.* We implemented two. Cosine decay follows:
 $eta_t = eta_"min" + 1/2 (eta_0 - eta_"min")(1 + cos(pi t / T))$.
-Step decay multiplies the current learning rate by $gamma$ every $k$ epochs, floored at $eta_"min"$.
+Step decay multiplies the current learning rate by $gamma$ every $k$ epochs, with a floor at $eta_"min"$.
 
-*Regularization.* L2 adds $2 lambda w$ to the weight gradient during the optimizer step. It is only applied to weight parameters, not biases. The regularizer is a separate protocol class, decoupled from the optimizer, so it can be swapped without touching the optimizer code. Dropout is applied after each convolutional activation during training.
+*Regularization.* Our L2 regularizer adds $2 lambda w$ to the weight gradient during the optimizer step, and it only touches weight parameters, not biases. We made the regularizer its own protocol class, decoupled from the optimizer, so we could swap regularization strategies without having to dig into the optimizer code. Dropout is applied after each convolutional activation during training.
 
-*Data pipeline.* Images are normalized per channel with the CIFAR-10 dataset statistics: mean $(0.4914, 0.4822, 0.4465)$, std $(0.2470, 0.2435, 0.2616)$. The training loader applies random horizontal flip and random crop with padding 4. Test loader has no augmentation and is deterministic.
+*Data pipeline.* All images get normalized per channel using the standard CIFAR-10 statistics: mean $(0.4914, 0.4822, 0.4465)$, std $(0.2470, 0.2435, 0.2616)$. For training, we apply random horizontal flips and random crops with padding 4. The test loader has no augmentation and is fully deterministic.
 
-*Weight initialization.* He initialization for both convolutional and fully connected weights: $w tilde cal(N)(0, 2/n_"in")$, where $n_"in"$ accounts for kernel area in conv layers.
+*Weight initialization.* We use He initialization for both convolutional and fully connected weights: $w tilde cal(N)(0, 2/n_"in")$, where $n_"in"$ accounts for kernel area in the conv layers. This is specifically designed for ReLU, which matters later when we try Sigmoid.
 
 = Evaluation
 
-After each training epoch we evaluate on the held-out test set with dropout disabled and no gradient computation. Test accuracy is $arg max_c p_c$ compared to the ground truth label, averaged over the full 10,000 test images. We track training loss (per batch, averaged per epoch), training accuracy, test accuracy, and test loss. The best checkpoint by test accuracy is saved and restored at the end of training.
+After every training epoch, we run the model on the held-out test set with dropout turned off and no gradient computation. We measure test accuracy by comparing $arg max_c p_c$ against the ground truth label, averaged across all 10,000 test images. Throughout training we track training loss (per batch, averaged per epoch), training accuracy, test accuracy, and test loss. And at the end, we restore whichever checkpoint had the best test accuracy.
 
-The baseline configuration is Adam ($eta = 0.001$, default betas), no learning rate scheduler, standard width (32, 64, 128 filters), ReLU, data augmentation, and no regularization. This hits *78.15%* test accuracy after 15 epochs, clearing the 75% requirement.
+Our baseline configuration (Adam at $eta = 0.001$ with default betas, no learning rate scheduler, standard width of 32, 64, 128 filters, ReLU activations, data augmentation on, and no regularization) lands at *78.15%* test accuracy after 15 epochs, clearing the 75% requirement.
 
 = Ablation Study
 
-We ran 8 ablation experiments. Each one varies a single factor while holding everything else at the baseline (Adam, $eta = 0.001$, $beta_1 = 0.9$, $beta_2 = 0.999$, no scheduler, standard width, ReLU, data augmentation, no regularization). All ablation runs use 15 epochs.
+For the ablation, we ran 8 experiments. Each experiment changes exactly one thing while holding everything else at the baseline described above (Adam, $eta = 0.001$, $beta_1 = 0.9$, $beta_2 = 0.999$, no scheduler, standard width, ReLU, augmentation on, no regularization). Every ablation run goes for 15 epochs.
 
 == Effect of Optimization Algorithm and Learning Rate
 
-We compared Adam ($eta = 0.001$) against SGD with Momentum ($beta = 0.9$) at three learning rates: 0.1, 0.05, and 0.01.
+The first thing we wanted to understand was how much the optimizer matters. We compared Adam ($eta = 0.001$) against SGD with Momentum ($beta = 0.9$) at three different learning rates: 0.1, 0.05, and 0.01.
 
 #figure(
   image("images/exp4/exp4_optimizer_loss.png", width: 85%),
@@ -117,13 +117,13 @@ We compared Adam ($eta = 0.001$) against SGD with Momentum ($beta = 0.9$) at thr
   caption: [Final results after 15 epochs for each optimizer and learning rate.]
 )
 
-*Findings.* Adam wins by a clear margin. By epoch 6 it is already at 72.0% while Momentum at lr=0.1 is at 70.1%, and by epoch 15 Adam leads by 1.2 points. The gap comes from Adam's per-parameter adaptive learning rates: a single $eta = 0.001$ just works, while Momentum is highly sensitive to the global learning rate. At lr=0.1 Momentum is competitive; at lr=0.05 it falls 4.5 points behind; at lr=0.01 it barely converges.
+Adam wins by a clear margin. By epoch 6, Adam is at 72.0% while the best Momentum configuration (lr=0.1) is trailing at 70.1%. By epoch 15, Adam leads by 1.2 points. The gap comes from Adam's per-parameter adaptive learning rates: a single $eta = 0.001$ works well, whereas Momentum is very sensitive to the choice of learning rate. At lr=0.1 Momentum is competitive; at lr=0.05 it falls 4.5 points behind; and at lr=0.01 it barely converges, only reaching 62.81%.
 
-*Takeaway.* Adam is the better choice for this task and epoch budget. We use Adam at $eta = 0.001$ for all remaining experiments.
+Given these results, we stuck with Adam at $eta = 0.001$ for every remaining experiment.
 
 == Effect of Adam Beta Parameters
 
-We swept $beta_1 in {0.8, 0.9, 0.95}$ with $beta_2 = 0.999$ fixed, and $beta_2 in {0.9, 0.99, 0.999}$ with $beta_1 = 0.9$ fixed.
+We swept $beta_1 in {0.8, 0.9, 0.95}$ with $beta_2 = 0.999$ held constant, and separately swept $beta_2 in {0.9, 0.99, 0.999}$ with $beta_1 = 0.9$ held constant.
 
 #figure(
   image("images/exp5/exp5_adam_betas_loss.png", width: 85%),
@@ -150,15 +150,15 @@ We swept $beta_1 in {0.8, 0.9, 0.95}$ with $beta_2 = 0.999$ fixed, and $beta_2 i
   caption: [Final test accuracy after 15 epochs for each beta configuration.]
 )
 
-*Findings.* Lowering $beta_1$ from 0.9 to 0.8 gains about 1 point. A smaller $beta_1$ gives less weight to past gradients in the first moment, so the optimizer responds faster to the current gradient. That matters early in training when the loss landscape is changing quickly. Pushing $beta_1$ up to 0.95 does the opposite: the optimizer over-smooths and misses sharp gradient signals.
+Dropping $beta_1$ from 0.9 to 0.8 picked up about a full percentage point. A smaller $beta_1$ puts less weight on past gradients when computing the first moment, so the optimizer reacts faster to what the gradient is doing at any given step. That matters early on when the loss landscape is shifting quickly. Going the other direction and pushing $beta_1$ up to 0.95 hurt performance because the optimizer was over-smoothing and missing sharper gradient signals.
 
-For $beta_2$, reducing from 0.999 to 0.99 also helps slightly (77.48% vs. 76.61%). Faster adaptation of the second moment lets the per-parameter learning rates update more responsively. Going to 0.9 is too aggressive and introduces noise.
+On the $beta_2$ side, dropping from 0.999 to 0.99 also helped (77.48% vs. 76.61%). The second moment adapts faster, which means the per-parameter learning rates adjust more responsively. But going all the way down to 0.9 was too aggressive and introduced noise.
 
-*Takeaway.* Both $beta_1 = 0.8$ and $beta_2 = 0.99$ individually beat the defaults. We use both in the final configuration.
+Since both $beta_1 = 0.8$ and $beta_2 = 0.99$ individually beat the defaults, we decided to use both together in the final configuration.
 
 == Effect of Learning Rate Decay
 
-We compared three schedules on top of Adam: cosine decay to zero over 15 epochs, step decay ($gamma = 0.5$ every 5 epochs), and no decay.
+We tested three learning rate schedules on top of Adam: cosine decay (annealing to zero over 15 epochs), step decay ($gamma = 0.5$ every 5 epochs), and just keeping the learning rate constant.
 
 #figure(
   image("images/exp1/exp1_lr_decay_loss.png", width: 85%),
@@ -183,15 +183,15 @@ We compared three schedules on top of Adam: cosine decay to zero over 15 epochs,
   caption: [Results after 15 epochs for each learning rate schedule.]
 )
 
-*Findings.* Cosine decay falls about 2 points behind the other two. The problem is that cosine decay starts reducing the learning rate immediately, right when the model is still far from any reasonable optimum. The loss curves show cosine lagging for the first 8 epochs, and by the time a small learning rate would actually be useful for fine-tuning, it has already burned through its budget.
+Cosine decay underperformed by about 2 points, and looking at the loss curves it is pretty clear why. Cosine starts pulling the learning rate down immediately from epoch 1, right when the model is still nowhere near a good optimum. It lags behind the other two for the first 8 epochs or so, and by the time a small learning rate would actually be helpful for fine-tuning, it has already used up most of its budget.
 
-Step decay and no decay perform comparably here, which makes sense at only 15 epochs. The model has not started oscillating around the minimum, so a constant learning rate is fine in the short term. The brief accuracy plateaus at epochs 5 and 10 visible in the step decay curves are the scheduler kicks landing.
+Step decay and no decay performed about the same here, which makes sense given that we only ran 15 epochs. The model has not yet started oscillating around a minimum, so there is no real need to reduce the learning rate in the short term. The step decay scheduler kicking in is visible at epochs 5 and 10, where there are brief plateaus in accuracy.
 
-*Takeaway.* Keep the learning rate high early in training. Step decay is the better long-term choice since it has a mechanism for late-stage refinement, but both beat cosine at 15 epochs.
+For the final model, we went with step decay. At 15 epochs it does not make a difference, but for the longer 50-epoch run we planned, having a mechanism to ramp down the learning rate later on is important.
 
 == Effect of Data Augmentation
 
-We trained with and without augmentation. The augmented pipeline adds random horizontal flip and random crop with padding 4. The test pipeline is the same in both cases.
+We trained the model with and without augmentation. The augmented pipeline adds random horizontal flips and random crops with padding 4; the test pipeline is identical in both cases.
 
 #figure(
   image("images/exp6/exp6_augmentation_loss.png", width: 85%),
@@ -215,11 +215,9 @@ We trained with and without augmentation. The augmented pipeline adds random hor
   caption: [Results after 15 epochs with and without data augmentation.]
 )
 
-*Findings.* Without augmentation, training accuracy hits 98.62% by epoch 5 while test accuracy is stuck at 65% and going nowhere. Training loss collapses to near zero while test loss climbs past 2.0. Classic overfit: the model is memorizing specific training images rather than learning anything generalizable. With augmentation, training and test accuracy stay close to each other throughout all 15 epochs.
+Without augmentation, the model memorizes the training set. Training accuracy hits 98.62% while test accuracy stalls around 65%, and training loss collapses to near zero while test loss climbs past 2.0. The network is just memorizing specific pixel patterns in the training images rather than learning features that generalize. With augmentation on, training and test accuracy stay close to each other throughout all 15 epochs.
 
-This is the biggest single factor in the ablation study, more than 12 percentage points difference.
-
-*Takeaway.* Augmentation is not optional here. Without it the model memorizes the training set. We use it in all experiments.
+This turned out to be the single biggest factor in the entire ablation study, accounting for more than 12 percentage points of difference. Augmentation is not optional for this model. We keep it on for everything.
 
 == Effect of Network Width
 
@@ -248,13 +246,13 @@ We compared three filter configurations: slim (16, 32, 64), standard (32, 64, 12
   caption: [Results after 15 epochs for each width configuration.]
 )
 
-*Findings.* There is a clear trend: more filters, better accuracy. Slim hits 75.44%, standard 77.18%, wide 78.17%. Each doubling of width adds roughly 1.5 to 1.7 percentage points. More filters means more feature maps at each stage, so the network can represent a richer set of patterns. The gap is modest at 15 epochs because none of the models have fully saturated their capacity yet. Over longer training the wider model's extra capacity would matter more.
+The trend is consistent: more filters means better accuracy. Slim gets 75.44%, standard gets 77.18%, wide gets 78.17%. Each doubling of the filter count picks up roughly 1.5 to 1.7 percentage points. More feature maps at each stage means the network can represent a wider variety of patterns, and CIFAR-10 has enough class diversity that the extra capacity helps. The gap is still modest at 15 epochs because none of the models have fully saturated their capacity yet, but over a longer training run, the wider model's advantage would likely grow.
 
-*Takeaway.* Wider filters are a consistent improvement. We use (64, 128, 256) for the final model.
+We used the wide configuration (64, 128, 256) for the final model.
 
 == Effect of Activation Function
 
-We swapped ReLU for Sigmoid in all conv and fully connected layers, keeping Softmax for the output.
+We swapped out ReLU for Sigmoid across all conv and fully connected layers, keeping Softmax on the output layer.
 
 #figure(
   image("images/exp8/exp8_activation_loss.png", width: 85%),
@@ -278,15 +276,15 @@ We swapped ReLU for Sigmoid in all conv and fully connected layers, keeping Soft
   caption: [Results after 15 epochs for each activation function.]
 )
 
-*Findings.* Sigmoid loses by over 10 points. The problem is vanishing gradients: Sigmoid saturates at both extremes of its range, where the derivative goes to zero. With multiple saturated layers, the gradient product shrinks exponentially by the time it reaches the early layers, which get almost no training signal. ReLU does not have this problem since its gradient is exactly 1 for all positive inputs, so gradients flow through unchanged.
+Sigmoid falls over 10 points behind ReLU due to vanishing gradients. Sigmoid saturates at both extremes of its output range, and when it saturates, the derivative goes to essentially zero. With multiple saturated layers, the gradient product shrinks exponentially by the time it reaches the early layers of the network, so those layers get almost no training signal. ReLU does not have this issue because its gradient is exactly 1 for all positive inputs, so gradients pass through without being squashed.
 
-He initialization (which we use) is also designed for ReLU specifically. It accounts for the fact that ReLU kills half the neurons on average and scales the initial weights to compensate. That assumption does not hold for Sigmoid, so the initialization is a bad fit and makes convergence worse.
+Additionally, He initialization (which is what we use) is designed specifically for ReLU. It accounts for the fact that ReLU zeroes out roughly half the neurons on average and scales the initial weights to compensate. That assumption does not hold for Sigmoid, so the initialization is a poor fit and makes the convergence problems worse.
 
-*Takeaway.* ReLU is the right choice. Sigmoid is not suitable for networks of this depth with He initialization.
+ReLU is the clear choice here. We did not experiment with other activations like Leaky ReLU or GELU since the assignment only asked us to compare two.
 
 == Effect of Regularization Method
 
-We compared four configurations: no regularization, L2 only ($lambda = 0.001$), Dropout only ($p = 0.3$), and both combined.
+We tested four setups: no regularization, L2 only ($lambda = 0.001$), Dropout only ($p = 0.3$), and both L2 and Dropout together.
 
 #figure(
   image("images/exp2/exp2_regularization_loss.png", width: 85%),
@@ -312,15 +310,15 @@ We compared four configurations: no regularization, L2 only ($lambda = 0.001$), 
   caption: [Results after 15 epochs for each regularization strategy.]
 )
 
-*Findings.* No regularization wins at 15 epochs, which is expected. Regularization trades training performance for generalization, but that trade only pays off once the model is actually overfitting. At this epoch count and model size, the unregularized model has not overfit yet, so the regularization just slows it down.
+No regularization wins at 15 epochs. Regularization trades training performance for generalization, but that trade only pays off once the model is actually overfitting. At this epoch count and model size, the unregularized model has not started overfitting yet; training and test accuracies are still within a point of each other. So the regularization is only slowing the model down without providing any benefit.
 
-All three regularized variants show higher training loss and lower training accuracy, which is the regularization working as intended. But it does not translate to better test accuracy here. Dropout outperforms L2 by about 1.2 points, and combining both is worse than either alone since the compounding constraints hit convergence speed harder.
+All three regularized variants have higher training loss and lower training accuracy, which means the regularization is constraining the weights as intended. But that constraint does not translate to better test accuracy because there is no overfitting to prevent. Dropout edged out L2 by about 1.2 points, and combining both was worse than either alone because the compounding constraints hit convergence speed too hard.
 
-*Takeaway.* Regularization is most valuable in longer training runs where overfitting becomes real. For the final model we skip it, since 50 epochs is still a short run for this architecture.
+For the final model we skip regularization. Even at 50 epochs, this architecture with augmentation does not overfit badly enough to warrant it.
 
 == Effect of L2 Regularization Strength
 
-We swept the L2 penalty $lambda$ over four orders of magnitude: $10^(-4)$, $10^(-3)$, $10^(-2)$, $10^(-1)$.
+We also swept the L2 penalty $lambda$ across four orders of magnitude ($10^(-4)$, $10^(-3)$, $10^(-2)$, $10^(-1)$) to see how sensitive the model is to this hyperparameter.
 
 #figure(
   image("images/exp3/exp3_l2_lambda_loss.png", width: 85%),
@@ -346,19 +344,19 @@ We swept the L2 penalty $lambda$ over four orders of magnitude: $10^(-4)$, $10^(
   caption: [Results after 15 epochs across L2 lambda values.]
 )
 
-*Findings.* The effect is highly nonlinear. At $lambda = 10^(-4)$ the model behaves almost identically to no regularization: 77.35% test accuracy, training loss basically the same. The penalty gradient $2 lambda w$ is too small to compete with the data gradient.
+The relationship is nonlinear. At $lambda = 10^(-4)$, the model behaves almost identically to having no regularization (77.35% test accuracy, training loss basically unchanged). The penalty gradient $2 lambda w$ is too small to compete with the data gradient.
 
-At $lambda = 10^(-3)$ we lose about 4 points. The penalty is now large enough to meaningfully shrink weights and slow learning, and since the model is not actually overfitting, this is purely a downside.
+At $lambda = 10^(-3)$ we lose about 4 points. The penalty is large enough to meaningfully shrink weights and slow down learning, but since the model is not overfitting, this is purely a downside.
 
-At $lambda = 10^(-2)$ training breaks. Accuracy plateaus at 51% and barely moves. The penalty gradient has taken over, so weight updates are dominated by weight shrinkage rather than the actual loss signal.
+At $lambda = 10^(-2)$, training breaks down. Accuracy plateaus around 51% and barely moves. The penalty gradient has taken over the update step, so weight updates are dominated by weight shrinkage rather than by the actual loss signal.
 
-At $lambda = 10^(-1)$ the model learns nothing. Test accuracy stays near random (24%) and loss never drops meaningfully.
+And at $lambda = 10^(-1)$, the model learns nothing. Test accuracy sits near random chance (24%) and the loss never meaningfully decreases.
 
-*Takeaway.* The usable range is narrow. Below $10^(-4)$ does nothing; at or above $10^(-2)$ training fails. If L2 were needed, $lambda = 10^(-4)$ is the sweet spot for this architecture and learning rate.
+The usable range for L2 is narrow. Below $10^(-4)$ has no effect; at or above $10^(-2)$ training fails. If L2 were needed for this architecture and learning rate, $10^(-4)$ would be the right value.
 
 = Final Training with Optimal Configuration
 
-Based on the ablation results, we assembled the best combination of settings:
+Based on the ablation results, we assembled the best combination of settings from each experiment:
 
 #figure(
   table(
@@ -407,9 +405,9 @@ Based on the ablation results, we assembled the best combination of settings:
   caption: [Test accuracy over 50 epochs with the optimal configuration.]
 )
 
-We trained for 50 epochs and restored the best checkpoint at the end. The model crosses 80% test accuracy at epoch 13 and peaks at *82.51%* at epoch 48. After epoch 30 the learning rate has decayed enough that improvements become incremental, and test accuracy settles in a narrow band above 82%.
+We trained for 50 epochs and restored the best checkpoint at the end. The model crosses 80% test accuracy around epoch 13 and peaks at *82.51%* at epoch 48. After about epoch 30 the learning rate has decayed enough that improvements become incremental, and test accuracy hovers in a narrow band above 82% for the last 20 epochs.
 
-The final 82.51% clears both the 75% baseline requirement and the ablation baseline of 78.15%, a gain of 4.36 points from wider filters, better Adam betas, and longer training.
+The final 82.51% clears both the 75% baseline requirement and our ablation baseline of 78.15%, a gain of 4.36 points from the combination of wider filters, tuned Adam betas, and the extra training time.
 
 = Individual Contributions
 
