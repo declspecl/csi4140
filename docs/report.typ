@@ -8,8 +8,8 @@
   #text(size: 16pt, weight: "bold")[CSI 4140/5140 — Project 1 Report]
 
   #v(0.5em)
-  Group Number \
-  Student Names and GrizzID
+  Group 5 \
+  Anton Sakhanovych and Gavin D'Hondt
 
   #v(0.5em)
   #datetime.today().display("[month repr:long] [day], [year]")
@@ -395,6 +395,11 @@ Based on the ablation results, we assembled the best combination of settings:
 #figure(
   image("images/final/final_loss.png", width: 85%),
   caption: [Training loss over 50 epochs with the optimal configuration.]
+)
+
+#figure(
+  image("images/final/final_train_acc.png", width: 85%),
+  caption: [Training accuracy over 50 epochs with the optimal configuration.]
 )
 
 #figure(
