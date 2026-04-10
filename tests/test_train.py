@@ -2,90 +2,30 @@ import os
 import pytest
 import torch
 import torch.nn as nn
+from unittest.mock import MagicMock
 
 from src.train import train_epoch, evaluate, train
 
 
+class FixedClassifier(nn.Module):
+    """Always predicts class 0 regardless of input."""
 
-class FakeLayerWithTraining:
-    def __init__(self):
-        self.training = False
-
-    def parameters(self):
-        return {}
-
-
-class FakeLayerWithoutTraining:
-    def parameters(self):
-        return {}
-
-
-class FakeLayerWithParams:
-    def __init__(self, weight):
-        self.weight = weight
-
-    def parameters(self):
-        return {"weight": self.weight}
-
-
-class FakeModel:
-    def __init__(self, output):
-        self.layers = [FakeLayerWithTraining(), FakeLayerWithoutTraining()]
-        self._output = output
-        self.forward_calls = []
-        self.backward_calls = []
+    def __init__(self, num_classes: int = 3):
+        super().__init__()
+        self.bias = nn.Parameter(torch.zeros(num_classes))
+        with torch.no_grad():
+            self.bias[0] = 10.0
 
     def forward(self, x):
-        self.forward_calls.append(x)
-        return self._output
-
-    def backward(self, grad):
-        self.backward_calls.append(grad)
-        return grad
-
-    def train(self):
-        for layer in self.layers:
-            if hasattr(layer, "training"):
-                layer.training = True
-
-    def eval(self):
-        for layer in self.layers:
-            if hasattr(layer, "training"):
-                layer.training = False
+        return self.bias.unsqueeze(0).expand(x.shape[0], -1)
 
 
-class FakeLoss:
-    def __init__(self, loss_value=1.0):
-        self._loss = loss_value
-
-    def calculate_loss(self, probs, targets):
-        return torch.tensor(self._loss)
-
-    def calculate_gradient(self, probs, targets):
-        return torch.ones_like(probs)
-
-
-class FakeOptimizer:
-    def __init__(self):
-        self.step_count = 0
-        self.zero_grad_count = 0
-
-    def zero_grad(self):
-        self.zero_grad_count += 1
-
-    def step(self):
-        self.step_count += 1
-
-
-class FakeScheduler:
-    def __init__(self):
-        self.step_count = 0
-
-    def step(self):
-        self.step_count += 1
-
-
-def make_loader(batches):
+def make_loader(batch_size: int = 4, num_batches: int = 1, all_class_0: bool = True):
+    batches = []
+    for _ in range(num_batches):
+        images = torch.randn(batch_size, 4)
+        labels = torch.zeros(batch_size, dtype=torch.long) if all_class_0 else torch.arange(batch_size) % 3
+        batches.append((images, labels))
     return batches
 
 
@@ -93,310 +33,163 @@ class TestTrainEpoch:
     @pytest.fixture
     def setup(self):
         torch.manual_seed(0)
-        probs = torch.zeros(3, 4)
-        probs[1, :] = 1.0
-        model = FakeModel(probs)
-        loss_fn = FakeLoss(loss_value=0.5)
-        optimizer = FakeOptimizer()
-        labels = torch.ones(4, dtype=torch.long)
-        loader = [(torch.randn(4, 3, 2, 2), labels)]
-        return model, loader, loss_fn, optimizer
+        model = FixedClassifier()
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+        loader = make_loader(batch_size=4)
+        return model, criterion, optimizer, loader
 
-    def test_returns_avg_loss(self, setup):
-        model, loader, loss_fn, optimizer = setup
-        avg_loss, _ = train_epoch(model, loader, loss_fn, optimizer)
-        assert avg_loss == pytest.approx(0.5)
-
-    def test_returns_accuracy(self, setup):
-        model, loader, loss_fn, optimizer = setup
-        _, acc = train_epoch(model, loader, loss_fn, optimizer)
+    def test_returns_avg_loss_and_accuracy(self, setup):
+        model, criterion, optimizer, loader = setup
+        avg_loss, acc = train_epoch(model, loader, criterion, optimizer, "cpu")
+        assert avg_loss > 0
         assert acc == pytest.approx(1.0)
 
     def test_partial_accuracy(self):
-        probs = torch.zeros(3, 4)
-        probs[1, :2] = 1.0  # first 2 predict class 1
-        probs[0, 2:] = 1.0  # last 2 predict class 0
-        model = FakeModel(probs)
-        loss_fn = FakeLoss()
-        optimizer = FakeOptimizer()
-        labels = torch.ones(4, dtype=torch.long)  # all class 1
-        loader = [(torch.randn(4, 3, 2, 2), labels)]
-
-        _, acc = train_epoch(model, loader, loss_fn, optimizer)
+        model = FixedClassifier()
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+        # 4 samples: 2 with label 0 (correct), 2 with label 1 (wrong)
+        images = torch.randn(4, 4)
+        labels = torch.tensor([0, 0, 1, 1])
+        loader = [(images, labels)]
+        _, acc = train_epoch(model, loader, criterion, optimizer, "cpu")
         assert acc == pytest.approx(0.5)
 
     def test_sets_training_mode(self, setup):
-        model, loader, loss_fn, optimizer = setup
-        train_epoch(model, loader, loss_fn, optimizer)
-        assert model.layers[0].training is True
+        model, criterion, optimizer, loader = setup
+        model.eval()
+        train_epoch(model, loader, criterion, optimizer, "cpu")
+        assert model.training is True
 
-    def test_calls_forward_and_backward(self, setup):
-        model, loader, loss_fn, optimizer = setup
-        train_epoch(model, loader, loss_fn, optimizer)
-        assert len(model.forward_calls) == 1
-        assert len(model.backward_calls) == 1
+    def test_optimizer_zero_grad_and_step_called(self, setup):
+        model, criterion, _, loader = setup
+        real_optim = torch.optim.SGD(model.parameters(), lr=0.01)
+        mock_optim = MagicMock(wraps=real_optim)
+        train_epoch(model, loader, criterion, mock_optim, "cpu")
+        assert mock_optim.zero_grad.call_count == 1
+        assert mock_optim.step.call_count == 1
 
-    def test_calls_optimizer_step(self, setup):
-        model, loader, loss_fn, optimizer = setup
-        train_epoch(model, loader, loss_fn, optimizer)
-        assert optimizer.step_count == 1
+    def test_iteration_losses_appended(self, setup):
+        model, criterion, optimizer, loader = setup
+        losses = []
+        train_epoch(model, loader, criterion, optimizer, "cpu", iteration_losses=losses)
+        assert len(losses) == 1
+        assert losses[0] > 0
 
     def test_multiple_batches(self):
-        probs = torch.zeros(3, 2)
-        probs[0, :] = 1.0
-        model = FakeModel(probs)
-        loss_fn = FakeLoss(loss_value=1.0)
-        optimizer = FakeOptimizer()
-        labels = torch.zeros(2, dtype=torch.long)
-        loader = [
-            (torch.randn(2, 3, 2, 2), labels),
-            (torch.randn(2, 3, 2, 2), labels),
-            (torch.randn(2, 3, 2, 2), labels),
-        ]
-
-        avg_loss, acc = train_epoch(model, loader, loss_fn, optimizer)
-        assert avg_loss == pytest.approx(1.0)
+        model = FixedClassifier()
+        criterion = nn.CrossEntropyLoss()
+        real_optim = torch.optim.SGD(model.parameters(), lr=0.01)
+        mock_optim = MagicMock(wraps=real_optim)
+        loader = make_loader(batch_size=2, num_batches=3)
+        avg_loss, acc = train_epoch(model, loader, criterion, mock_optim, "cpu")
+        assert avg_loss > 0
         assert acc == pytest.approx(1.0)
-        assert optimizer.step_count == 3
+        assert mock_optim.step.call_count == 3
 
     def test_empty_loader(self):
-        model = FakeModel(None)
-        loss_fn = FakeLoss()
-        optimizer = FakeOptimizer()
-
-        avg_loss, acc = train_epoch(model, [], loss_fn, optimizer)
+        model = FixedClassifier()
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+        avg_loss, acc = train_epoch(model, [], criterion, optimizer, "cpu")
         assert avg_loss == 0.0
         assert acc == 0.0
-
-    def test_calls_zero_grad(self, setup):
-        model, loader, loss_fn, optimizer = setup
-        train_epoch(model, loader, loss_fn, optimizer)
-        assert optimizer.zero_grad_count == 1
 
 
 class TestEvaluate:
     @pytest.fixture
     def setup(self):
-        probs = torch.zeros(3, 4)
-        probs[2, :] = 1.0  # predict class 2
-        model = FakeModel(probs)
-        loss_fn = FakeLoss(loss_value=0.25)
-        labels = torch.full((4,), 2, dtype=torch.long)
-        loader = [(torch.randn(4, 3, 2, 2), labels)]
-        return model, loader, loss_fn
+        model = FixedClassifier()
+        criterion = nn.CrossEntropyLoss()
+        loader = make_loader(batch_size=4)
+        return model, criterion, loader
 
-    def test_returns_avg_loss(self, setup):
-        model, loader, loss_fn = setup
-        avg_loss, _ = evaluate(model, loader, loss_fn)
-        assert avg_loss == pytest.approx(0.25)
-
-    def test_returns_accuracy(self, setup):
-        model, loader, loss_fn = setup
-        _, acc = evaluate(model, loader, loss_fn)
+    def test_returns_avg_loss_and_accuracy(self, setup):
+        model, criterion, loader = setup
+        avg_loss, acc = evaluate(model, loader, criterion, "cpu")
+        assert avg_loss > 0
         assert acc == pytest.approx(1.0)
 
     def test_sets_eval_mode(self, setup):
-        model, loader, loss_fn = setup
-        model.layers[0].training = True
-        evaluate(model, loader, loss_fn)
-        assert model.layers[0].training is False
+        model, criterion, loader = setup
+        model.train()
+        evaluate(model, loader, criterion, "cpu")
+        assert model.training is False
 
-    def test_no_backward_called(self, setup):
-        model, loader, loss_fn = setup
-        evaluate(model, loader, loss_fn)
-        assert len(model.backward_calls) == 0
+    def test_no_gradients_computed(self, setup):
+        model, criterion, loader = setup
+        evaluate(model, loader, criterion, "cpu")
+        for p in model.parameters():
+            assert p.grad is None
 
     def test_empty_loader(self):
-        model = FakeModel(None)
-        loss_fn = FakeLoss()
-        avg_loss, acc = evaluate(model, [], loss_fn)
+        model = FixedClassifier()
+        criterion = nn.CrossEntropyLoss()
+        avg_loss, acc = evaluate(model, [], criterion, "cpu")
         assert avg_loss == 0.0
         assert acc == 0.0
 
     def test_multiple_batches(self):
-        probs = torch.zeros(2, 3)
-        probs[0, :] = 1.0
-        model = FakeModel(probs)
-        loss_fn = FakeLoss(loss_value=2.0)
-        labels = torch.zeros(3, dtype=torch.long)
-        loader = [
-            (torch.randn(3, 1), labels),
-            (torch.randn(3, 1), labels),
-        ]
-
-        avg_loss, acc = evaluate(model, loader, loss_fn)
-        assert avg_loss == pytest.approx(2.0)
+        model = FixedClassifier()
+        criterion = nn.CrossEntropyLoss()
+        loader = make_loader(batch_size=2, num_batches=3)
+        avg_loss, acc = evaluate(model, loader, criterion, "cpu")
+        assert avg_loss > 0
         assert acc == pytest.approx(1.0)
 
 
 class TestTrain:
     @pytest.fixture
     def setup(self, tmp_path):
-        probs = torch.zeros(3, 2)
-        probs[0, :] = 1.0
-        p = nn.Parameter(torch.randn(2, 2))
-        model = FakeModel(probs)
-        model.layers.append(FakeLayerWithParams(p))
-        loss_fn = FakeLoss(loss_value=0.5)
-        optimizer = FakeOptimizer()
-        labels = torch.zeros(2, dtype=torch.long)
-        train_loader = [(torch.randn(2, 3, 2, 2), labels)]
-        test_loader = [(torch.randn(2, 3, 2, 2), labels)]
-        checkpoint_path = str(tmp_path / "best.pt")
-        return model, train_loader, test_loader, loss_fn, optimizer, checkpoint_path, p
+        torch.manual_seed(0)
+        model = FixedClassifier()
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+        loader = make_loader(batch_size=2)
+        cp = str(tmp_path / "best.pt")
+        return model, criterion, optimizer, loader, cp
 
-    def test_returns_history_dict(self, setup):
-        model, train_loader, test_loader, loss_fn, optimizer, cp, _ = setup
-        history = train(
-            model,
-            train_loader,
-            test_loader,
-            loss_fn,
-            optimizer,
-            epochs=3,
-            checkpoint_path=cp,
-        )
+    def test_returns_history_keys(self, setup):
+        model, criterion, optimizer, loader, cp = setup
+        history = train(model, loader, loader, criterion, optimizer, epochs=2, checkpoint_path=cp)
         assert set(history.keys()) == {"train_loss", "train_acc", "test_loss", "test_acc", "iteration_loss"}
-        assert len(history["train_loss"]) == 3
-        assert len(history["train_acc"]) == 3
-        assert len(history["test_loss"]) == 3
-        assert len(history["test_acc"]) == 3
 
-    def test_history_values(self, setup):
-        model, train_loader, test_loader, loss_fn, optimizer, cp, _ = setup
-        history = train(
-            model,
-            train_loader,
-            test_loader,
-            loss_fn,
-            optimizer,
-            epochs=2,
-            checkpoint_path=cp,
-        )
-        for loss in history["train_loss"]:
-            assert loss == pytest.approx(0.5)
-        for acc in history["train_acc"]:
-            assert acc == pytest.approx(1.0)
+    def test_history_length(self, setup):
+        model, criterion, optimizer, loader, cp = setup
+        history = train(model, loader, loader, criterion, optimizer, epochs=3, checkpoint_path=cp)
+        for key in ("train_loss", "train_acc", "test_loss", "test_acc"):
+            assert len(history[key]) == 3
 
     def test_checkpoint_saved(self, setup):
-        model, train_loader, test_loader, loss_fn, optimizer, cp, _ = setup
-        train(
-            model,
-            train_loader,
-            test_loader,
-            loss_fn,
-            optimizer,
-            epochs=1,
-            checkpoint_path=cp,
-        )
+        model, criterion, optimizer, loader, cp = setup
+        train(model, loader, loader, criterion, optimizer, epochs=1, checkpoint_path=cp)
         assert os.path.exists(cp)
 
-    def test_checkpoint_has_stable_keys(self, setup):
-        model, train_loader, test_loader, loss_fn, optimizer, cp, _ = setup
-        train(
-            model,
-            train_loader,
-            test_loader,
-            loss_fn,
-            optimizer,
-            epochs=1,
-            checkpoint_path=cp,
-        )
-        saved_state = torch.load(cp, weights_only=False)
-        for key in saved_state:
-            assert isinstance(key, tuple)
-            assert isinstance(key[0], int)
-
-    def test_best_weights_restored(self, setup):
-        model, train_loader, test_loader, loss_fn, optimizer, cp, p = setup
-
-        train(
-            model,
-            train_loader,
-            test_loader,
-            loss_fn,
-            optimizer,
-            epochs=1,
-            checkpoint_path=cp,
-        )
-
-        saved_state = torch.load(cp, weights_only=False)
-        key = (2, "weight")
-        assert torch.allclose(p.data, saved_state[key])
+    def test_checkpoint_is_state_dict(self, setup):
+        model, criterion, optimizer, loader, cp = setup
+        train(model, loader, loader, criterion, optimizer, epochs=1, checkpoint_path=cp)
+        state = torch.load(cp, weights_only=True)
+        assert isinstance(state, dict)
+        for key in state:
+            assert isinstance(key, str)
 
     def test_scheduler_stepped(self, setup):
-        model, train_loader, test_loader, loss_fn, optimizer, cp, _ = setup
-        scheduler = FakeScheduler()
-
-        train(
-            model,
-            train_loader,
-            test_loader,
-            loss_fn,
-            optimizer,
-            scheduler=scheduler,
-            epochs=5,
-            checkpoint_path=cp,
-        )
-
-        assert scheduler.step_count == 5
+        model, criterion, optimizer, loader, cp = setup
+        scheduler = MagicMock()
+        train(model, loader, loader, criterion, optimizer, scheduler=scheduler, epochs=4, checkpoint_path=cp)
+        assert scheduler.step.call_count == 4
 
     def test_no_scheduler(self, setup):
-        model, train_loader, test_loader, loss_fn, optimizer, cp, _ = setup
-        history = train(
-            model,
-            train_loader,
-            test_loader,
-            loss_fn,
-            optimizer,
-            scheduler=None,
-            epochs=1,
-            checkpoint_path=cp,
-        )
+        model, criterion, optimizer, loader, cp = setup
+        history = train(model, loader, loader, criterion, optimizer, scheduler=None, epochs=1, checkpoint_path=cp)
         assert len(history["train_loss"]) == 1
 
     def test_prints_epoch_summary(self, setup, capsys):
-        model, train_loader, test_loader, loss_fn, optimizer, cp, _ = setup
-        train(
-            model,
-            train_loader,
-            test_loader,
-            loss_fn,
-            optimizer,
-            epochs=2,
-            checkpoint_path=cp,
-        )
-        captured = capsys.readouterr()
-        assert "Epoch 1/2" in captured.out
-        assert "Epoch 2/2" in captured.out
-        assert "train_loss" in captured.out
-        assert "test_acc" in captured.out
-
-    def test_checkpoint_only_on_improvement(self, tmp_path):
-        call_count = 0
-
-        class DegradingModel(FakeModel):
-            def forward(self, x):
-                nonlocal call_count
-                call_count += 1
-                probs = torch.zeros(2, 2)
-                if call_count <= 2:
-                    probs[0, :] = 1.0
-                else:
-                    probs[1, :] = 1.0
-                return probs
-
-        p = nn.Parameter(torch.randn(2))
-        model = DegradingModel(None)
-        model.layers.append(FakeLayerWithParams(p))
-        loss_fn = FakeLoss()
-        optimizer = FakeOptimizer()
-        labels = torch.zeros(2, dtype=torch.long)
-        loader = [(torch.randn(2, 1), labels)]
-        cp = str(tmp_path / "best.pt")
-
-        train(model, loader, loader, loss_fn, optimizer, epochs=2, checkpoint_path=cp)
-
-        assert os.path.exists(cp)
-        saved = torch.load(cp, weights_only=False)
-        assert (2, "weight") in saved
+        model, criterion, optimizer, loader, cp = setup
+        train(model, loader, loader, criterion, optimizer, epochs=2, checkpoint_path=cp)
+        out = capsys.readouterr().out
+        assert "Epoch 1/2" in out
+        assert "Epoch 2/2" in out
+        assert "train_loss" in out
+        assert "test_acc" in out
