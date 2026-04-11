@@ -22,6 +22,7 @@ def train_epoch(
     optimizer: Optimizer,
     device: str,
     iteration_losses: list[float] | None = None,
+    verbose: bool = True,
 ) -> tuple[float, float]:
     model.train()
     total_loss, correct, total = 0.0, 0, 0
@@ -42,7 +43,7 @@ def train_epoch(
         if iteration_losses is not None:
             iteration_losses.append(loss.item())
 
-        if i % 50 == 0:
+        if verbose and i % 50 == 0:
             print(f"    Batch {i}/{len(loader)} - loss: {loss.item():.4f}", flush=True)
 
     return (total_loss / len(loader) if loader else 0.0), (correct / total if total else 0.0)
@@ -78,6 +79,7 @@ def train(
     epochs: int = 50,
     device: str = "cpu",
     checkpoint_path: str = "best_model.pt",
+    verbose: bool = True,
 ) -> TrainingHistory:
     history: TrainingHistory = {
         "train_loss": [],
@@ -90,7 +92,7 @@ def train(
 
     for epoch in range(epochs):
         train_loss, train_acc = train_epoch(
-            model, train_loader, criterion, optimizer, device, history["iteration_loss"]
+            model, train_loader, criterion, optimizer, device, history["iteration_loss"], verbose
         )
         test_loss, test_acc = evaluate(model, test_loader, criterion, device)
 
