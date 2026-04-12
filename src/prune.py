@@ -58,7 +58,8 @@ def compute_flops(model: nn.Module, input_size: tuple[int, ...] = (1, 3, 32, 32)
         elif isinstance(m, nn.Linear):
             hooks.append(m.register_forward_hook(linear_hook))
 
-    x = torch.zeros(*input_size)
+    device = next(model.parameters()).device
+    x = torch.zeros(*input_size, device=device)
     with torch.no_grad():
         model(x)
 
