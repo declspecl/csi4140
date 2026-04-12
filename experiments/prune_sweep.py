@@ -1,40 +1,21 @@
-"""
-Project 2 — Pruning experiments.
-
-Runs three ablation aspects and saves all plots + a summary table.
-
-Usage:
-    python -m experiments.prune_sweep --checkpoint best_model.pt
-
-Aspects
--------
-1. Sparsity sweep        — accuracy vs remaining parameters (required plot)
-2. Fine-tuning ablation  — with vs without fine-tuning after pruning
-3. Pruning scope         — all layers vs conv-only vs fc-only
-"""
-
 import argparse
-import copy
 import os
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-import matplotlib.pyplot as plt
 
 from src.data import get_dataloaders
 from src.model import CIFAR10CNN
-from src.prune import apply_pruning, remove_masks, count_parameters, compute_flops
+from src.prune import apply_global_pruning, apply_pruning, compute_flops, count_parameters, remove_masks
 from src.train import evaluate, train
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 PLOTS_DIR = "results/plots"
 FINETUNE_LR = 1e-4
 FINETUNE_EPOCHS = 10
+FIXED_SPARSITY = 0.7
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _load_model(checkpoint: str) -> nn.Module:
     model = CIFAR10CNN().to(DEVICE)
@@ -77,26 +58,18 @@ def _print_table(headers: list[str], rows: list[list]) -> None:
         print(fmt.format(*row))
 
 
-# ---------------------------------------------------------------------------
-# Aspect 1: Sparsity sweep  (required visualization)
-# ---------------------------------------------------------------------------
-
 def run_sparsity_sweep(checkpoint: str, train_loader, test_loader) -> None:
     print("\n" + "=" * 60)
     print("Aspect 1: Sparsity Sweep")
     print("=" * 60)
 
-    sparsity_levels = [0.0, 0.2, 0.4, 0.6, 0.7, 0.8, 0.9]
+    sparsity_levels = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     criterion = nn.CrossEntropyLoss()
-
-    total_params_base, _ = count_parameters(_load_model(checkpoint))
     flops_base = compute_flops(_load_model(checkpoint))
-
     rows: list[dict] = []
 
     for sparsity in sparsity_levels:
         print(f"\n  Sparsity {sparsity:.0%} ...", flush=True)
-
         model = _load_model(checkpoint)
 
         if sparsity > 0.0:
@@ -104,7 +77,7 @@ def run_sparsity_sweep(checkpoint: str, train_loader, test_loader) -> None:
             remove_masks(model)
             _finetune(model, train_loader, test_loader, FINETUNE_EPOCHS, f"sparsity_{sparsity:.2f}")
 
-        train_loss, train_acc = evaluate(model, train_loader, criterion, DEVICE)
+        train_acc, _ = evaluate(model, train_loader, criterion, DEVICE)
         _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
         total, nonzero = count_parameters(model)
 
@@ -114,30 +87,17 @@ def run_sparsity_sweep(checkpoint: str, train_loader, test_loader) -> None:
             "total": total,
             "train_acc": train_acc,
             "test_acc": test_acc,
-            "flops": flops_base,  # dense FLOPs don't change with unstructured pruning
+            "flops": flops_base,
             "eff_flops": int(flops_base * (1 - sparsity)),
         })
-
-        print(f"    Nonzero params : {nonzero:>12,} / {total:,} ({nonzero/total:.1%})")
-        print(f"    Train accuracy : {train_acc:.4f}")
-        print(f"    Test accuracy  : {test_acc:.4f}")
-        print(f"    Dense FLOPs    : {flops_base:>12,}")
-        print(f"    Effective FLOPs: {int(flops_base * (1 - sparsity)):>12,}")
-
-    # --- required plot: test accuracy vs remaining parameters ---
-    nonzero_params = [r["nonzero"] for r in rows]
-    test_accs = [r["test_acc"] for r in rows]
+        print(f"    Nonzero: {nonzero:,} / {total:,} ({nonzero/total:.1%})")
+        print(f"    Train acc: {train_acc:.4f}  Test acc: {test_acc:.4f}")
 
     plt.figure(figsize=(7, 5))
-    plt.plot(nonzero_params, test_accs, marker="o", linewidth=2)
+    plt.plot([r["nonzero"] for r in rows], [r["test_acc"] for r in rows], marker="o", linewidth=2)
     for r in rows:
-        plt.annotate(
-            f"{r['sparsity']:.0%}",
-            (r["nonzero"], r["test_acc"]),
-            textcoords="offset points",
-            xytext=(6, 4),
-            fontsize=8,
-        )
+        plt.annotate(f"{r['sparsity']:.0%}", (r["nonzero"], r["test_acc"]),
+                     textcoords="offset points", xytext=(6, 4), fontsize=8)
     plt.xlabel("Remaining Parameters (non-zero)")
     plt.ylabel("Test Accuracy")
     plt.title("Test Accuracy vs Remaining Parameters (L1 Pruning + Fine-tuning)")
@@ -145,42 +105,25 @@ def run_sparsity_sweep(checkpoint: str, train_loader, test_loader) -> None:
     plt.tight_layout()
     _save_plot("prune_sparsity_sweep.png")
 
-    # --- summary table ---
     print("\nSummary:")
     _print_table(
         ["Sparsity", "Nonzero Params", "Total Params", "Train Acc", "Test Acc", "Eff. FLOPs"],
-        [
-            [
-                f"{r['sparsity']:.0%}",
-                f"{r['nonzero']:,}",
-                f"{r['total']:,}",
-                f"{r['train_acc']:.4f}",
-                f"{r['test_acc']:.4f}",
-                f"{r['eff_flops']:,}",
-            ]
-            for r in rows
-        ],
+        [[f"{r['sparsity']:.0%}", f"{r['nonzero']:,}", f"{r['total']:,}",
+          f"{r['train_acc']:.4f}", f"{r['test_acc']:.4f}", f"{r['eff_flops']:,}"] for r in rows],
     )
 
-
-# ---------------------------------------------------------------------------
-# Aspect 2: Fine-tuning ablation
-# Compare: no fine-tuning vs 5 / 10 / 20 fine-tune epochs at fixed sparsity
-# ---------------------------------------------------------------------------
 
 def run_finetune_ablation(checkpoint: str, train_loader, test_loader) -> None:
     print("\n" + "=" * 60)
     print("Aspect 2: Fine-tuning Epochs Ablation (sparsity=70%)")
     print("=" * 60)
 
-    FIXED_SPARSITY = 0.7
     epoch_options = [0, 5, 10, 20]
     criterion = nn.CrossEntropyLoss()
     rows: list[dict] = []
 
     for epochs in epoch_options:
         print(f"\n  Fine-tune epochs: {epochs} ...", flush=True)
-
         model = _load_model(checkpoint)
         apply_pruning(model, amount=FIXED_SPARSITY, scope="all")
         remove_masks(model)
@@ -188,50 +131,34 @@ def run_finetune_ablation(checkpoint: str, train_loader, test_loader) -> None:
 
         _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
         rows.append({"epochs": epochs, "test_acc": test_acc})
-        print(f"    Test accuracy: {test_acc:.4f}")
-
-    epoch_vals = [r["epochs"] for r in rows]
-    test_accs = [r["test_acc"] for r in rows]
+        print(f"    Test acc: {test_acc:.4f}")
 
     plt.figure(figsize=(6, 4))
-    plt.plot(epoch_vals, test_accs, marker="o", linewidth=2)
+    plt.plot([r["epochs"] for r in rows], [r["test_acc"] for r in rows], marker="o", linewidth=2)
     plt.xlabel("Fine-tuning Epochs")
     plt.ylabel("Test Accuracy")
     plt.title("Accuracy Recovery vs Fine-tuning Epochs (sparsity=70%)")
-    plt.xticks(epoch_vals)
+    plt.xticks([r["epochs"] for r in rows])
     plt.grid(True)
     plt.tight_layout()
     _save_plot("prune_finetune_ablation.png")
 
     print("\nSummary:")
-    _print_table(
-        ["Fine-tune Epochs", "Test Acc"],
-        [[r["epochs"], f"{r['test_acc']:.4f}"] for r in rows],
-    )
+    _print_table(["Fine-tune Epochs", "Test Acc"],
+                 [[r["epochs"], f"{r['test_acc']:.4f}"] for r in rows])
 
-
-# ---------------------------------------------------------------------------
-# Aspect 3: Pruning scope ablation
-# Compare: all layers vs conv-only vs fc-only at fixed sparsity
-# ---------------------------------------------------------------------------
 
 def run_scope_ablation(checkpoint: str, train_loader, test_loader) -> None:
     print("\n" + "=" * 60)
     print("Aspect 3: Pruning Scope Ablation (sparsity=70%)")
     print("=" * 60)
 
-    FIXED_SPARSITY = 0.7
-    scopes = [
-        ("all",  "All layers"),
-        ("conv", "Conv only"),
-        ("fc",   "FC only"),
-    ]
+    scopes = [("all", "All layers"), ("conv", "Conv only"), ("fc", "FC only")]
     criterion = nn.CrossEntropyLoss()
     rows: list[dict] = []
 
     for scope, label in scopes:
         print(f"\n  Scope: {label} ...", flush=True)
-
         model = _load_model(checkpoint)
         apply_pruning(model, amount=FIXED_SPARSITY, scope=scope)
         remove_masks(model)
@@ -240,14 +167,11 @@ def run_scope_ablation(checkpoint: str, train_loader, test_loader) -> None:
         _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
         _, nonzero = count_parameters(model)
         rows.append({"label": label, "nonzero": nonzero, "test_acc": test_acc})
-        print(f"    Nonzero params: {nonzero:,}")
-        print(f"    Test accuracy : {test_acc:.4f}")
-
-    labels = [r["label"] for r in rows]
-    test_accs = [r["test_acc"] for r in rows]
+        print(f"    Nonzero: {nonzero:,}  Test acc: {test_acc:.4f}")
 
     plt.figure(figsize=(6, 4))
-    bars = plt.bar(labels, test_accs, color=["#2563eb", "#16a34a", "#dc2626"], width=0.5)
+    bars = plt.bar([r["label"] for r in rows], [r["test_acc"] for r in rows],
+                   color=["#2563eb", "#16a34a", "#dc2626"], width=0.5)
     plt.bar_label(bars, fmt="%.4f", padding=3, fontsize=9)
     plt.ylabel("Test Accuracy")
     plt.title("Test Accuracy by Pruning Scope (sparsity=70%, 10 fine-tune epochs)")
@@ -257,21 +181,142 @@ def run_scope_ablation(checkpoint: str, train_loader, test_loader) -> None:
     _save_plot("prune_scope_ablation.png")
 
     print("\nSummary:")
-    _print_table(
-        ["Scope", "Nonzero Params", "Test Acc"],
-        [[r["label"], f"{r['nonzero']:,}", f"{r['test_acc']:.4f}"] for r in rows],
-    )
+    _print_table(["Scope", "Nonzero Params", "Test Acc"],
+                 [[r["label"], f"{r['nonzero']:,}", f"{r['test_acc']:.4f}"] for r in rows])
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
+def run_global_vs_local(checkpoint: str, train_loader, test_loader) -> None:
+    print("\n" + "=" * 60)
+    print("Aspect 4: Global vs Local Pruning (sparsity=70%)")
+    print("=" * 60)
+
+    criterion = nn.CrossEntropyLoss()
+    strategies = [
+        ("Local (per-layer)", lambda m: apply_pruning(m, amount=FIXED_SPARSITY, scope="all")),
+        ("Global (network-wide)", lambda m: apply_global_pruning(m, amount=FIXED_SPARSITY)),
+    ]
+    rows: list[dict] = []
+
+    for label, prune_fn in strategies:
+        print(f"\n  Strategy: {label} ...", flush=True)
+        model = _load_model(checkpoint)
+        prune_fn(model)
+        remove_masks(model)
+        _finetune(model, train_loader, test_loader, FINETUNE_EPOCHS, f"strategy_{label[:3].lower()}")
+
+        _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
+        _, nonzero = count_parameters(model)
+        rows.append({"label": label, "nonzero": nonzero, "test_acc": test_acc})
+        print(f"    Nonzero: {nonzero:,}  Test acc: {test_acc:.4f}")
+
+    plt.figure(figsize=(6, 4))
+    bars = plt.bar([r["label"] for r in rows], [r["test_acc"] for r in rows],
+                   color=["#2563eb", "#f59e0b"], width=0.4)
+    plt.bar_label(bars, fmt="%.4f", padding=3, fontsize=9)
+    plt.ylabel("Test Accuracy")
+    plt.title("Global vs Local Pruning (sparsity=70%, 10 fine-tune epochs)")
+    plt.ylim(0, 1.05)
+    plt.grid(axis="y", alpha=0.4)
+    plt.tight_layout()
+    _save_plot("prune_global_vs_local.png")
+
+    print("\nSummary:")
+    _print_table(["Strategy", "Nonzero Params", "Test Acc"],
+                 [[r["label"], f"{r['nonzero']:,}", f"{r['test_acc']:.4f}"] for r in rows])
+
+
+def run_iterative_vs_oneshot(checkpoint: str, train_loader, test_loader) -> None:
+    print("\n" + "=" * 60)
+    print("Aspect 5: Iterative vs One-shot Pruning (~70% sparsity, 10 total fine-tune epochs)")
+    print("=" * 60)
+
+    criterion = nn.CrossEntropyLoss()
+    rows: list[dict] = []
+
+    print("\n  One-shot ...", flush=True)
+    model = _load_model(checkpoint)
+    apply_pruning(model, amount=FIXED_SPARSITY, scope="all")
+    remove_masks(model)
+    _finetune(model, train_loader, test_loader, 10, "oneshot")
+    _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
+    _, nonzero = count_parameters(model)
+    rows.append({"label": "One-shot", "nonzero": nonzero, "test_acc": test_acc})
+    print(f"    Nonzero: {nonzero:,}  Test acc: {test_acc:.4f}")
+
+    print("\n  Iterative (3 rounds x 33% of remaining, 3-4 epochs each) ...", flush=True)
+    model = _load_model(checkpoint)
+    for i, epochs in enumerate([3, 3, 4]):
+        apply_pruning(model, amount=0.33, scope="all")
+        remove_masks(model)
+        _finetune(model, train_loader, test_loader, epochs, f"iterative_r{i}")
+    _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
+    _, nonzero = count_parameters(model)
+    rows.append({"label": "Iterative (3 rounds)", "nonzero": nonzero, "test_acc": test_acc})
+    print(f"    Nonzero: {nonzero:,}  Test acc: {test_acc:.4f}")
+
+    plt.figure(figsize=(6, 4))
+    bars = plt.bar([r["label"] for r in rows], [r["test_acc"] for r in rows],
+                   color=["#2563eb", "#16a34a"], width=0.4)
+    plt.bar_label(bars, fmt="%.4f", padding=3, fontsize=9)
+    plt.ylabel("Test Accuracy")
+    plt.title("One-shot vs Iterative Pruning (~70% sparsity, 10 total fine-tune epochs)")
+    plt.ylim(0, 1.05)
+    plt.grid(axis="y", alpha=0.4)
+    plt.tight_layout()
+    _save_plot("prune_iterative_vs_oneshot.png")
+
+    print("\nSummary:")
+    _print_table(["Strategy", "Nonzero Params", "Test Acc"],
+                 [[r["label"], f"{r['nonzero']:,}", f"{r['test_acc']:.4f}"] for r in rows])
+
+
+def run_layer_sensitivity(checkpoint: str, train_loader, test_loader) -> None:
+    print("\n" + "=" * 60)
+    print("Aspect 6: Per-layer Sensitivity (sparsity=70%, no fine-tuning)")
+    print("=" * 60)
+
+    criterion = nn.CrossEntropyLoss()
+    layers = ["conv1", "conv2", "conv3", "fc1", "fc2"]
+    rows: list[dict] = []
+
+    _, baseline_acc = evaluate(_load_model(checkpoint), test_loader, criterion, DEVICE)
+    print(f"  Baseline test acc: {baseline_acc:.4f}")
+
+    for layer_name in layers:
+        print(f"\n  Pruning {layer_name} only ...", flush=True)
+        model = _load_model(checkpoint)
+        module = getattr(model, layer_name)
+        import torch.nn.utils.prune as prune_utils
+        prune_utils.l1_unstructured(module, name="weight", amount=FIXED_SPARSITY)
+        prune_utils.remove(module, "weight")
+
+        _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
+        drop = baseline_acc - test_acc
+        rows.append({"layer": layer_name, "test_acc": test_acc, "drop": drop})
+        print(f"    Test acc: {test_acc:.4f}  Drop: {drop:.4f}")
+
+    plt.figure(figsize=(7, 4))
+    colors = ["#dc2626" if r["drop"] > 0.02 else "#2563eb" for r in rows]
+    bars = plt.bar([r["layer"] for r in rows], [r["drop"] for r in rows], color=colors, width=0.5)
+    plt.bar_label(bars, fmt="%.4f", padding=3, fontsize=9)
+    plt.axhline(0, color="black", linewidth=0.8)
+    plt.xlabel("Layer")
+    plt.ylabel("Accuracy Drop")
+    plt.title("Per-layer Sensitivity to 70% Pruning (no fine-tuning)")
+    plt.grid(axis="y", alpha=0.4)
+    plt.tight_layout()
+    _save_plot("prune_layer_sensitivity.png")
+
+    print("\nSummary:")
+    _print_table(["Layer", "Test Acc", "Accuracy Drop"],
+                 [[r["layer"], f"{r['test_acc']:.4f}", f"{r['drop']:.4f}"] for r in rows])
+
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Pruning ablation experiments for Project 2")
-    parser.add_argument("--checkpoint", default="best_model.pt", help="Path to trained model checkpoint")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--checkpoint", default="best_model.pt")
     parser.add_argument("--batch-size", type=int, default=128)
-    parser.add_argument("--aspect", type=int, choices=[1, 2, 3], help="Run only one aspect (default: all)")
+    parser.add_argument("--aspect", type=int, choices=[1, 2, 3, 4, 5, 6])
     args = parser.parse_args()
 
     print(f"Device: {DEVICE}")
@@ -285,6 +330,12 @@ def main() -> None:
         run_finetune_ablation(args.checkpoint, train_loader, test_loader)
     if args.aspect in (None, 3):
         run_scope_ablation(args.checkpoint, train_loader, test_loader)
+    if args.aspect in (None, 4):
+        run_global_vs_local(args.checkpoint, train_loader, test_loader)
+    if args.aspect in (None, 5):
+        run_iterative_vs_oneshot(args.checkpoint, train_loader, test_loader)
+    if args.aspect in (None, 6):
+        run_layer_sensitivity(args.checkpoint, train_loader, test_loader)
 
     print("\nAll experiments complete. Plots saved to:", PLOTS_DIR)
 
