@@ -74,8 +74,8 @@ def run_sparsity_sweep(checkpoint: str, train_loader, test_loader) -> None:
 
         if sparsity > 0.0:
             apply_pruning(model, amount=sparsity, scope="all")
-            remove_masks(model)
             _finetune(model, train_loader, test_loader, FINETUNE_EPOCHS, f"sparsity_{sparsity:.2f}")
+            remove_masks(model)
 
         _, train_acc = evaluate(model, train_loader, criterion, DEVICE)
         _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
@@ -126,8 +126,8 @@ def run_finetune_ablation(checkpoint: str, train_loader, test_loader) -> None:
         print(f"\n  Fine-tune epochs: {epochs} ...", flush=True)
         model = _load_model(checkpoint)
         apply_pruning(model, amount=FIXED_SPARSITY, scope="all")
-        remove_masks(model)
         _finetune(model, train_loader, test_loader, epochs, f"ft_{epochs}")
+        remove_masks(model)
 
         _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
         rows.append({"epochs": epochs, "test_acc": test_acc})
@@ -161,8 +161,8 @@ def run_scope_ablation(checkpoint: str, train_loader, test_loader) -> None:
         print(f"\n  Scope: {label} ...", flush=True)
         model = _load_model(checkpoint)
         apply_pruning(model, amount=FIXED_SPARSITY, scope=scope)
-        remove_masks(model)
         _finetune(model, train_loader, test_loader, FINETUNE_EPOCHS, f"scope_{scope}")
+        remove_masks(model)
 
         _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
         _, nonzero = count_parameters(model)
@@ -201,8 +201,8 @@ def run_global_vs_local(checkpoint: str, train_loader, test_loader) -> None:
         print(f"\n  Strategy: {label} ...", flush=True)
         model = _load_model(checkpoint)
         prune_fn(model)
-        remove_masks(model)
         _finetune(model, train_loader, test_loader, FINETUNE_EPOCHS, f"strategy_{label[:3].lower()}")
+        remove_masks(model)
 
         _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
         _, nonzero = count_parameters(model)
@@ -236,8 +236,8 @@ def run_iterative_vs_oneshot(checkpoint: str, train_loader, test_loader) -> None
     print("\n  One-shot ...", flush=True)
     model = _load_model(checkpoint)
     apply_pruning(model, amount=FIXED_SPARSITY, scope="all")
-    remove_masks(model)
     _finetune(model, train_loader, test_loader, 10, "oneshot")
+    remove_masks(model)
     _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
     _, nonzero = count_parameters(model)
     rows.append({"label": "One-shot", "nonzero": nonzero, "test_acc": test_acc})
@@ -247,8 +247,8 @@ def run_iterative_vs_oneshot(checkpoint: str, train_loader, test_loader) -> None
     model = _load_model(checkpoint)
     for i, epochs in enumerate([3, 3, 4]):
         apply_pruning(model, amount=0.33, scope="all")
-        remove_masks(model)
         _finetune(model, train_loader, test_loader, epochs, f"iterative_r{i}")
+        remove_masks(model)
     _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
     _, nonzero = count_parameters(model)
     rows.append({"label": "Iterative (3 rounds)", "nonzero": nonzero, "test_acc": test_acc})
