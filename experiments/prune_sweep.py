@@ -77,7 +77,7 @@ def run_sparsity_sweep(checkpoint: str, train_loader, test_loader) -> None:
             remove_masks(model)
             _finetune(model, train_loader, test_loader, FINETUNE_EPOCHS, f"sparsity_{sparsity:.2f}")
 
-        train_acc, _ = evaluate(model, train_loader, criterion, DEVICE)
+        _, train_acc = evaluate(model, train_loader, criterion, DEVICE)
         _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
         total, nonzero = count_parameters(model)
 
