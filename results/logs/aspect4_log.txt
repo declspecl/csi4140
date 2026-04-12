@@ -1,0 +1,41 @@
+Device: cuda
+Checkpoint: best_model.pt
+
+============================================================
+Aspect 4: Global vs Local Pruning (sparsity=70%)
+============================================================
+
+  Strategy: Local (per-layer) ...
+Epoch 1/10 - train_loss: 0.7581 train_acc: 0.7366 - test_loss: 0.5964 test_acc: 0.7923
+Epoch 2/10 - train_loss: 0.5042 train_acc: 0.8243 - test_loss: 0.5428 test_acc: 0.8136
+Epoch 3/10 - train_loss: 0.4570 train_acc: 0.8418 - test_loss: 0.5287 test_acc: 0.8223
+Epoch 4/10 - train_loss: 0.4332 train_acc: 0.8492 - test_loss: 0.5211 test_acc: 0.8276
+Epoch 5/10 - train_loss: 0.4177 train_acc: 0.8546 - test_loss: 0.5223 test_acc: 0.8261
+Epoch 6/10 - train_loss: 0.4040 train_acc: 0.8579 - test_loss: 0.5220 test_acc: 0.8288
+Epoch 7/10 - train_loss: 0.3990 train_acc: 0.8607 - test_loss: 0.5220 test_acc: 0.8253
+Epoch 8/10 - train_loss: 0.3890 train_acc: 0.8654 - test_loss: 0.5164 test_acc: 0.8302
+Epoch 9/10 - train_loss: 0.3829 train_acc: 0.8649 - test_loss: 0.5210 test_acc: 0.8279
+Epoch 10/10 - train_loss: 0.3755 train_acc: 0.8702 - test_loss: 0.5202 test_acc: 0.8299
+    Nonzero: 2,630,198  Test acc: 0.8299
+
+  Strategy: Global (network-wide) ...
+Epoch 1/10 - train_loss: 0.3608 train_acc: 0.8739 - test_loss: 0.5265 test_acc: 0.8326
+Epoch 2/10 - train_loss: 0.3594 train_acc: 0.8745 - test_loss: 0.5241 test_acc: 0.8335
+Epoch 3/10 - train_loss: 0.3528 train_acc: 0.8768 - test_loss: 0.5244 test_acc: 0.8333
+Epoch 4/10 - train_loss: 0.3522 train_acc: 0.8770 - test_loss: 0.5253 test_acc: 0.8335
+Epoch 5/10 - train_loss: 0.3498 train_acc: 0.8780 - test_loss: 0.5254 test_acc: 0.8350
+Epoch 6/10 - train_loss: 0.3402 train_acc: 0.8814 - test_loss: 0.5252 test_acc: 0.8329
+Epoch 7/10 - train_loss: 0.3407 train_acc: 0.8804 - test_loss: 0.5253 test_acc: 0.8320
+Epoch 8/10 - train_loss: 0.3359 train_acc: 0.8835 - test_loss: 0.5200 test_acc: 0.8323
+Epoch 9/10 - train_loss: 0.3355 train_acc: 0.8826 - test_loss: 0.5323 test_acc: 0.8278
+Epoch 10/10 - train_loss: 0.3291 train_acc: 0.8842 - test_loss: 0.5251 test_acc: 0.8329
+    Nonzero: 2,630,199  Test acc: 0.8329
+Saved: results/plots/prune_global_vs_local.png
+
+Summary:
+Strategy               Nonzero Params  Test Acc
+---------------------  --------------  --------
+Local (per-layer)      2,630,198       0.8299  
+Global (network-wide)  2,630,199       0.8329  
+
+All experiments complete. Plots saved to: results/plots

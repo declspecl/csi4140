@@ -1,0 +1,55 @@
+Device: cuda
+Checkpoint: best_model.pt
+
+============================================================
+Aspect 3: Pruning Scope Ablation (sparsity=70%)
+============================================================
+
+  Scope: All layers ...
+Epoch 1/10 - train_loss: 0.7580 train_acc: 0.7350 - test_loss: 0.6013 test_acc: 0.7907
+Epoch 2/10 - train_loss: 0.5086 train_acc: 0.8222 - test_loss: 0.5393 test_acc: 0.8159
+Epoch 3/10 - train_loss: 0.4573 train_acc: 0.8405 - test_loss: 0.5274 test_acc: 0.8219
+Epoch 4/10 - train_loss: 0.4298 train_acc: 0.8502 - test_loss: 0.5345 test_acc: 0.8201
+Epoch 5/10 - train_loss: 0.4157 train_acc: 0.8548 - test_loss: 0.5213 test_acc: 0.8258
+Epoch 6/10 - train_loss: 0.4037 train_acc: 0.8590 - test_loss: 0.5208 test_acc: 0.8250
+Epoch 7/10 - train_loss: 0.3982 train_acc: 0.8613 - test_loss: 0.5184 test_acc: 0.8303
+Epoch 8/10 - train_loss: 0.3903 train_acc: 0.8618 - test_loss: 0.5161 test_acc: 0.8275
+Epoch 9/10 - train_loss: 0.3816 train_acc: 0.8672 - test_loss: 0.5197 test_acc: 0.8291
+Epoch 10/10 - train_loss: 0.3776 train_acc: 0.8676 - test_loss: 0.5166 test_acc: 0.8314
+    Nonzero: 2,630,198  Test acc: 0.8314
+
+  Scope: Conv only ...
+Epoch 1/10 - train_loss: 0.7421 train_acc: 0.7416 - test_loss: 0.5926 test_acc: 0.7968
+Epoch 2/10 - train_loss: 0.5033 train_acc: 0.8249 - test_loss: 0.5366 test_acc: 0.8173
+Epoch 3/10 - train_loss: 0.4533 train_acc: 0.8427 - test_loss: 0.5275 test_acc: 0.8251
+Epoch 4/10 - train_loss: 0.4305 train_acc: 0.8490 - test_loss: 0.5192 test_acc: 0.8265
+Epoch 5/10 - train_loss: 0.4143 train_acc: 0.8556 - test_loss: 0.5118 test_acc: 0.8298
+Epoch 6/10 - train_loss: 0.4026 train_acc: 0.8597 - test_loss: 0.5149 test_acc: 0.8279
+Epoch 7/10 - train_loss: 0.3893 train_acc: 0.8654 - test_loss: 0.5256 test_acc: 0.8246
+Epoch 8/10 - train_loss: 0.3835 train_acc: 0.8663 - test_loss: 0.5143 test_acc: 0.8316
+Epoch 9/10 - train_loss: 0.3773 train_acc: 0.8680 - test_loss: 0.5142 test_acc: 0.8316
+Epoch 10/10 - train_loss: 0.3725 train_acc: 0.8702 - test_loss: 0.5115 test_acc: 0.8335
+    Nonzero: 8,505,808  Test acc: 0.8335
+
+  Scope: FC only ...
+Epoch 1/10 - train_loss: 0.3722 train_acc: 0.8690 - test_loss: 0.5267 test_acc: 0.8287
+Epoch 2/10 - train_loss: 0.3642 train_acc: 0.8720 - test_loss: 0.5319 test_acc: 0.8283
+Epoch 3/10 - train_loss: 0.3609 train_acc: 0.8730 - test_loss: 0.5355 test_acc: 0.8287
+Epoch 4/10 - train_loss: 0.3595 train_acc: 0.8751 - test_loss: 0.5305 test_acc: 0.8301
+Epoch 5/10 - train_loss: 0.3551 train_acc: 0.8760 - test_loss: 0.5353 test_acc: 0.8258
+Epoch 6/10 - train_loss: 0.3490 train_acc: 0.8792 - test_loss: 0.5287 test_acc: 0.8312
+Epoch 7/10 - train_loss: 0.3481 train_acc: 0.8788 - test_loss: 0.5298 test_acc: 0.8310
+Epoch 8/10 - train_loss: 0.3405 train_acc: 0.8803 - test_loss: 0.5294 test_acc: 0.8308
+Epoch 9/10 - train_loss: 0.3387 train_acc: 0.8814 - test_loss: 0.5329 test_acc: 0.8298
+Epoch 10/10 - train_loss: 0.3365 train_acc: 0.8836 - test_loss: 0.5358 test_acc: 0.8301
+    Nonzero: 2,889,456  Test acc: 0.8301
+Saved: results/plots/prune_scope_ablation.png
+
+Summary:
+Scope       Nonzero Params  Test Acc
+----------  --------------  --------
+All layers  2,630,198       0.8314  
+Conv only   8,505,808       0.8335  
+FC only     2,889,456       0.8301  
+
+All experiments complete. Plots saved to: results/plots

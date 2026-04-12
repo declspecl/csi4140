@@ -1,0 +1,34 @@
+Device: cuda
+Checkpoint: best_model.pt
+
+============================================================
+Aspect 6: Per-layer Sensitivity (sparsity=70%, no fine-tuning)
+============================================================
+  Baseline test acc: 0.8358
+
+  Pruning conv1 only ...
+    Test acc: 0.3993  Drop: 0.4365
+
+  Pruning conv2 only ...
+    Test acc: 0.7832  Drop: 0.0526
+
+  Pruning conv3 only ...
+    Test acc: 0.8279  Drop: 0.0079
+
+  Pruning fc1 only ...
+    Test acc: 0.8352  Drop: 0.0006
+
+  Pruning fc2 only ...
+    Test acc: 0.8248  Drop: 0.0110
+Saved: results/plots/prune_layer_sensitivity.png
+
+Summary:
+Layer  Test Acc  Accuracy Drop
+-----  --------  -------------
+conv1  0.3993    0.4365       
+conv2  0.7832    0.0526       
+conv3  0.8279    0.0079       
+fc1    0.8352    0.0006       
+fc2    0.8248    0.0110       
+
+All experiments complete. Plots saved to: results/plots

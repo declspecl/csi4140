@@ -1,0 +1,64 @@
+Device: cuda
+Checkpoint: best_model.pt
+
+============================================================
+Aspect 2: Fine-tuning Epochs Ablation (sparsity=70%)
+============================================================
+
+  Fine-tune epochs: 0 ...
+    Test acc: 0.3811
+
+  Fine-tune epochs: 5 ...
+Epoch 1/5 - train_loss: 0.7545 train_acc: 0.7388 - test_loss: 0.5951 test_acc: 0.7922
+Epoch 2/5 - train_loss: 0.5094 train_acc: 0.8199 - test_loss: 0.5424 test_acc: 0.8131
+Epoch 3/5 - train_loss: 0.4580 train_acc: 0.8396 - test_loss: 0.5332 test_acc: 0.8197
+Epoch 4/5 - train_loss: 0.4323 train_acc: 0.8504 - test_loss: 0.5266 test_acc: 0.8237
+Epoch 5/5 - train_loss: 0.4192 train_acc: 0.8540 - test_loss: 0.5210 test_acc: 0.8259
+    Test acc: 0.8259
+
+  Fine-tune epochs: 10 ...
+Epoch 1/10 - train_loss: 0.7514 train_acc: 0.7406 - test_loss: 0.5969 test_acc: 0.7896
+Epoch 2/10 - train_loss: 0.5053 train_acc: 0.8224 - test_loss: 0.5417 test_acc: 0.8140
+Epoch 3/10 - train_loss: 0.4562 train_acc: 0.8426 - test_loss: 0.5286 test_acc: 0.8207
+Epoch 4/10 - train_loss: 0.4336 train_acc: 0.8478 - test_loss: 0.5209 test_acc: 0.8254
+Epoch 5/10 - train_loss: 0.4173 train_acc: 0.8540 - test_loss: 0.5192 test_acc: 0.8247
+Epoch 6/10 - train_loss: 0.4048 train_acc: 0.8585 - test_loss: 0.5185 test_acc: 0.8282
+Epoch 7/10 - train_loss: 0.3979 train_acc: 0.8610 - test_loss: 0.5236 test_acc: 0.8272
+Epoch 8/10 - train_loss: 0.3883 train_acc: 0.8650 - test_loss: 0.5164 test_acc: 0.8279
+Epoch 9/10 - train_loss: 0.3863 train_acc: 0.8659 - test_loss: 0.5159 test_acc: 0.8302
+Epoch 10/10 - train_loss: 0.3757 train_acc: 0.8684 - test_loss: 0.5178 test_acc: 0.8265
+    Test acc: 0.8265
+
+  Fine-tune epochs: 20 ...
+Epoch 1/20 - train_loss: 0.7582 train_acc: 0.7381 - test_loss: 0.5971 test_acc: 0.7921
+Epoch 2/20 - train_loss: 0.5059 train_acc: 0.8219 - test_loss: 0.5419 test_acc: 0.8144
+Epoch 3/20 - train_loss: 0.4580 train_acc: 0.8402 - test_loss: 0.5320 test_acc: 0.8205
+Epoch 4/20 - train_loss: 0.4313 train_acc: 0.8505 - test_loss: 0.5253 test_acc: 0.8227
+Epoch 5/20 - train_loss: 0.4177 train_acc: 0.8547 - test_loss: 0.5198 test_acc: 0.8249
+Epoch 6/20 - train_loss: 0.4063 train_acc: 0.8571 - test_loss: 0.5202 test_acc: 0.8270
+Epoch 7/20 - train_loss: 0.3926 train_acc: 0.8627 - test_loss: 0.5167 test_acc: 0.8286
+Epoch 8/20 - train_loss: 0.3883 train_acc: 0.8626 - test_loss: 0.5198 test_acc: 0.8285
+Epoch 9/20 - train_loss: 0.3821 train_acc: 0.8672 - test_loss: 0.5203 test_acc: 0.8297
+Epoch 10/20 - train_loss: 0.3737 train_acc: 0.8698 - test_loss: 0.5152 test_acc: 0.8295
+Epoch 11/20 - train_loss: 0.3695 train_acc: 0.8709 - test_loss: 0.5194 test_acc: 0.8318
+Epoch 12/20 - train_loss: 0.3632 train_acc: 0.8751 - test_loss: 0.5264 test_acc: 0.8286
+Epoch 13/20 - train_loss: 0.3648 train_acc: 0.8717 - test_loss: 0.5219 test_acc: 0.8266
+Epoch 14/20 - train_loss: 0.3567 train_acc: 0.8765 - test_loss: 0.5240 test_acc: 0.8303
+Epoch 15/20 - train_loss: 0.3516 train_acc: 0.8775 - test_loss: 0.5235 test_acc: 0.8293
+Epoch 16/20 - train_loss: 0.3489 train_acc: 0.8794 - test_loss: 0.5196 test_acc: 0.8321
+Epoch 17/20 - train_loss: 0.3400 train_acc: 0.8819 - test_loss: 0.5224 test_acc: 0.8312
+Epoch 18/20 - train_loss: 0.3390 train_acc: 0.8802 - test_loss: 0.5239 test_acc: 0.8312
+Epoch 19/20 - train_loss: 0.3362 train_acc: 0.8834 - test_loss: 0.5216 test_acc: 0.8301
+Epoch 20/20 - train_loss: 0.3337 train_acc: 0.8834 - test_loss: 0.5203 test_acc: 0.8305
+    Test acc: 0.8305
+Saved: results/plots/prune_finetune_ablation.png
+
+Summary:
+Fine-tune Epochs  Test Acc
+----------------  --------
+0                 0.3811  
+5                 0.8259  
+10                0.8265  
+20                0.8305  
+
+All experiments complete. Plots saved to: results/plots
