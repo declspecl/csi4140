@@ -245,8 +245,8 @@ def run_iterative_vs_oneshot(checkpoint: str, train_loader, test_loader) -> None
 
     print("\n  Iterative (3 rounds x 33% of remaining, 3-4 epochs each) ...", flush=True)
     model = _load_model(checkpoint)
-    for i, epochs in enumerate([3, 3, 4]):
-        apply_pruning(model, amount=0.33, scope="all")
+    for i, (amount, epochs) in enumerate(zip([0.33, 0.551, 0.699], [3, 3, 4])):
+        apply_pruning(model, amount=amount, scope="all")
         _finetune(model, train_loader, test_loader, epochs, f"iterative_r{i}")
         remove_masks(model)
     _, test_acc = evaluate(model, test_loader, criterion, DEVICE)
