@@ -60,21 +60,7 @@ def _make_int8_dynamic(model: nn.Module) -> nn.Module:
 
 
 def _int8_dynamic_size_bytes(model: nn.Module) -> int:
-    total = 0
-    for module in model.modules():
-        packed = getattr(module, "_packed_params", None)
-        if packed is not None:
-            w, _ = packed._packed_params
-            total += w.numel()
-        elif isinstance(module, (nn.Conv2d,)):
-            total += module.weight.numel() * 4
-            if module.bias is not None:
-                total += module.bias.numel() * 4
-        elif isinstance(module, nn.Linear):
-            total += module.weight.numel() * 4
-            if module.bias is not None:
-                total += module.bias.numel() * 4
-    return total
+    return _state_dict_size_bytes(model)
 
 
 def _eval_cpu(model: nn.Module, test_loader) -> float:
